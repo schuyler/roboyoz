@@ -74,10 +74,29 @@ const choose_subject = async (
   }
   say("subject_chosen", { name });
   gather({
-    action: "goodbye",
-    input: ["dtmf"],
-    timeout: 120,
-    finishOnKey: "#",
+    action: "ask_question",
+    input: ["dtmf", "speech"],
+    timeout: 5,
+    numDigits: 1,
+    actionOnEmptyResult: true,
+  });
+};
+
+const ask_question = async (
+  { say, redirect, gather }: ResponseFunctions,
+  params: URLSearchParams,
+) => {
+  if (params.get("Digits")?.includes("*")) {
+    redirect("goodbye");
+  }
+  say("interstitial");
+  say("besha_questions");
+  gather({
+    action: "ask_question",
+    input: ["dtmf", "speech"],
+    timeout: 5,
+    actionOnEmptyResult: true,
+    numDigits: 1,
   });
 };
 
@@ -98,6 +117,7 @@ export const actions: Record<string, ActionFunction> = {
   greeting,
   request_subject,
   choose_subject,
+  ask_question,
   goodbye,
   hangup,
 };
