@@ -23,7 +23,10 @@ const messages: Record<string, string | string[]> = {
     "Cool.",
     "You can say that again.",
   ],
-  goodbye: "Thanks for joining us for the podcast. See you at the wedding!",
+  goodbye:
+    "Thanks for joining us for the podcast. See you at the wedding! Bye now!",
+  error:
+    "Oh dear. Something's gone sideways. Schuyler is probably to blame. I'll let him know. Try calling back later, please? Bye!",
 };
 
 export const getMessage = (

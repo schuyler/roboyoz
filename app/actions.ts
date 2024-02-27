@@ -14,6 +14,14 @@ type ActionFunction = (
 ) => Promise<void>;
 
 const answer = async (
+  { say, redirect }: ResponseFunctions,
+  _params: URLSearchParams,
+) => {
+  say("greeting");
+  redirect("record");
+};
+
+const record = async (
   { redirect }: ResponseFunctions,
   params: URLSearchParams,
 ) => {
@@ -30,14 +38,6 @@ const answer = async (
       recordingTrack: "inbound",
     });
   }
-  redirect("greeting");
-};
-
-const greeting = async (
-  { say, redirect }: ResponseFunctions,
-  _params: URLSearchParams,
-) => {
-  say("greeting");
   redirect("request_subject");
 };
 
@@ -114,7 +114,7 @@ const hangup = async ({ response }: ResponseFunctions) => {
 
 export const actions: Record<string, ActionFunction> = {
   answer,
-  greeting,
+  record,
   request_subject,
   choose_subject,
   ask_question,

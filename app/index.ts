@@ -56,7 +56,7 @@ export const handler = async (
     return render(response);
   } catch (error) {
     console.error("Error handling call:", error);
-    say("An error occurred. Please try again later.");
+    say("error");
     return render(response, 500);
   }
 };
