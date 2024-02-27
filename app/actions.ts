@@ -1,28 +1,38 @@
-import { GatherAttributes } from "twilio/lib/twiml/VoiceResponse";
 import { Twilio, twiml } from "twilio";
+import {
+  GatherAttributes,
+  RecordAttributes,
+} from "twilio/lib/twiml/VoiceResponse";
+import { Interview } from "./interview";
 
-interface ResponseFunctions {
+interface ActionResponses {
   say: (message: string, values?: { [key: string]: string }) => void;
   gather: (args: GatherAttributes) => void;
   redirect: (path: string) => void;
+  record: (path: string, args?: RecordAttributes) => void;
   response: twiml.VoiceResponse;
 }
 
-type ActionFunction = (
-  funcs: ResponseFunctions,
+interface ActionContext {
+  interview: Interview;
+}
+
+type Action = (
+  funcs: ActionResponses,
   params: URLSearchParams,
+  context: ActionContext,
 ) => Promise<void>;
 
 const answer = async (
-  { say, redirect }: ResponseFunctions,
+  { say, redirect }: ActionResponses,
   _params: URLSearchParams,
 ) => {
   say("greeting");
-  redirect("record");
+  redirect("record_call");
 };
 
-const record = async (
-  { redirect }: ResponseFunctions,
+const record_call = async (
+  { redirect }: ActionResponses,
   params: URLSearchParams,
 ) => {
   const client = new Twilio(
@@ -42,7 +52,7 @@ const record = async (
 };
 
 const request_subject = async (
-  { say, gather }: ResponseFunctions,
+  { say, gather }: ActionResponses,
   _params: URLSearchParams,
 ) => {
   say("request_subject");
@@ -56,13 +66,14 @@ const request_subject = async (
 };
 
 const choose_subject = async (
-  { say, redirect, gather }: ResponseFunctions,
+  { say, redirect, record }: ActionResponses,
   params: URLSearchParams,
+  { interview }: ActionContext,
 ) => {
   const result = params.get("SpeechResult")?.toLowerCase() || "";
   console.log("SpeechResult: " + result);
   let name = "";
-  if (result[0] == "b") {
+  if ("bvptdf".includes(result[0])) {
     name = "Besha";
   } else if (result[0] == "s") {
     name = "Schuyler";
@@ -72,49 +83,51 @@ const choose_subject = async (
     redirect("request_subject");
     return;
   }
+  interview.selectedTopic = name;
   say("subject_chosen", { name });
-  gather({
-    action: "ask_question",
-    input: ["dtmf", "speech"],
-    timeout: 5,
-    numDigits: 1,
-    actionOnEmptyResult: true,
-  });
+  record("ask_question");
 };
 
 const ask_question = async (
-  { say, redirect, gather }: ResponseFunctions,
+  { say, redirect, record }: ActionResponses,
   params: URLSearchParams,
+  { interview }: ActionContext,
 ) => {
   if (params.get("Digits")?.includes("*")) {
     redirect("goodbye");
   }
+  const topic = interview.selectedTopic;
+  if (!topic) {
+    throw new Error("Interview is missing a topic");
+  }
   say("interstitial");
-  say("besha_questions");
+  say(topic.toLowerCase() + "_questions");
+  record("ask_question");
+  /*
   gather({
     action: "ask_question",
-    input: ["dtmf", "speech"],
-    timeout: 5,
+    input: ["dtmf"],
+    timeout: 3600,
     actionOnEmptyResult: true,
     numDigits: 1,
-  });
+  });*/
 };
 
 const goodbye = async (
-  { say, response }: ResponseFunctions,
+  { say, response }: ActionResponses,
   _params: URLSearchParams,
 ) => {
   say("goodbye");
   response.pause({ length: 3 });
 };
 
-const hangup = async ({ response }: ResponseFunctions) => {
+const hangup = async ({ response }: ActionResponses) => {
   response.hangup();
 };
 
-export const actions: Record<string, ActionFunction> = {
+export const actions: Record<string, Action> = {
   answer,
-  record,
+  record_call,
   request_subject,
   choose_subject,
   ask_question,

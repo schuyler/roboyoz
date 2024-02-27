@@ -4,14 +4,24 @@ import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import * as iam from "aws-cdk-lib/aws-iam";
+import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 
 import { actions } from "../app/actions";
+import { tableName } from "../app/interview";
 import settings from "./settings.json";
 // import * as s3 from "aws-cdk-lib/aws-s3";
 
 export default class RoboYozService extends Construct {
   constructor(scope: Construct, id: string) {
     super(scope, id);
+
+    const table = new dynamodb.Table(this, tableName, {
+      tableName: tableName,
+      partitionKey: {
+        name: "phoneNumber",
+        type: dynamodb.AttributeType.STRING,
+      },
+    });
 
     // Create an S3 bucket
     const bucket = new s3.Bucket(this, "roboyoz-bucket", {
@@ -41,7 +51,18 @@ export default class RoboYozService extends Construct {
       },
     });
 
+    table.grantReadWriteData(handler);
     bucket.grantReadWrite(handler);
+    handler.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+        ],
+        resources: ["arn:aws:logs:*:*:*"],
+      }),
+    );
 
     const api = new apigateway.RestApi(this, "roboyoz-api", {
       restApiName: "RoboYoz",

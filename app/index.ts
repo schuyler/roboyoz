@@ -1,10 +1,14 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { twiml } from "twilio";
-import { GatherAttributes } from "twilio/lib/twiml/VoiceResponse";
+import {
+  GatherAttributes,
+  RecordAttributes,
+} from "twilio/lib/twiml/VoiceResponse";
 import { URLSearchParams } from "url";
 
 import { actions } from "./actions";
 import { getMessage } from "./messages";
+import { loadInterview, saveInterview } from "./interview";
 
 const render = (
   response: twiml.VoiceResponse,
@@ -31,6 +35,7 @@ export const handler = async (
         voice: "Google.en-GB-Standard-B",
         language: "en-GB",
       },
+      //`<prosody pitch="-15%" rate="85%">${text}</prosody>`,
       text,
     );
   };
@@ -39,6 +44,15 @@ export const handler = async (
   };
   const redirect = (path: string) => {
     response.redirect(path);
+  };
+  const record = (action: string, args: RecordAttributes = {}) => {
+    response.record({
+      action,
+      timeout: 5,
+      finishOnKey: "#*",
+      playBeep: false,
+      ...args,
+    });
   };
 
   try {
@@ -52,11 +66,15 @@ export const handler = async (
     if (!action) {
       throw new Error("Action could not be identified");
     }
-    await action({ say, gather, redirect, response }, params);
+    const interview = await loadInterview(caller);
+    await action({ say, gather, redirect, response, record }, params, {
+      interview,
+    });
+    await saveInterview(interview); // maybe don't want to do this every single call
     return render(response);
   } catch (error) {
     console.error("Error handling call:", error);
     say("error");
-    return render(response, 500);
+    return render(response);
   }
 };
