@@ -4,6 +4,7 @@ import {
   RecordAttributes,
 } from "twilio/lib/twiml/VoiceResponse";
 import { Interview } from "./interview";
+import { getMessage } from "./messages";
 
 interface ActionResponses {
   say: (message: string, values?: { [key: string]: string }) => void;
@@ -24,13 +25,22 @@ type Action = (
 ) => Promise<void>;
 
 const answer = async (
-  { say, redirect }: ActionResponses,
+  { say, redirect, response }: ActionResponses,
   _params: URLSearchParams,
+  { interview }: ActionContext,
 ) => {
+  response.pause({ length: 1 });
   say("greeting");
-  redirect("record_call");
+  if (!interview.selectedTopic) {
+    say("introduction");
+  } else {
+    say("welcome_back");
+  }
+  interview.introduced = true;
+  redirect("request_subject");
 };
 
+// this is actually not used
 const record_call = async (
   { redirect }: ActionResponses,
   params: URLSearchParams,
@@ -58,9 +68,10 @@ const request_subject = async (
   say("request_subject");
   gather({
     action: "choose_subject",
-    input: ["speech"],
+    input: ["dtmf", "speech"],
     speechModel: "phone_call",
     hints: "Schuyler, Besha",
+    numDigits: 1,
     speechTimeout: "2",
   });
 };
@@ -70,12 +81,13 @@ const choose_subject = async (
   params: URLSearchParams,
   { interview }: ActionContext,
 ) => {
+  const digits = params.get("Digits") || "";
   const result = params.get("SpeechResult")?.toLowerCase() || "";
   console.log("SpeechResult: " + result);
   let name = "";
-  if ("bvptdf".includes(result[0])) {
+  if (digits == "1" || "bvptdf".includes(result[0])) {
     name = "Besha";
-  } else if (result[0] == "s") {
+  } else if (digits == "2" || result[0] == "s") {
     name = "Schuyler";
   }
   if (!name) {
@@ -85,7 +97,7 @@ const choose_subject = async (
   }
   interview.selectedTopic = name;
   say("subject_chosen", { name });
-  record("ask_question");
+  redirect("ask_question");
 };
 
 const ask_question = async (
@@ -93,24 +105,28 @@ const ask_question = async (
   params: URLSearchParams,
   { interview }: ActionContext,
 ) => {
-  if (params.get("Digits")?.includes("*")) {
-    redirect("goodbye");
-  }
   const topic = interview.selectedTopic;
   if (!topic) {
     throw new Error("Interview is missing a topic");
   }
-  say("interstitial");
-  say(topic.toLowerCase() + "_questions");
+  if (params.get("Digits")?.includes("*")) {
+    interview.answeredQuestions.splice(-2);
+  } else if (interview.introduced) {
+    interview.introduced = false;
+  } else {
+    say("interstitial");
+  }
+  const question = getMessage(
+    topic.toLowerCase() + "_questions",
+    {},
+    interview.answeredQuestions,
+  );
+  if (!question) {
+    redirect("goodbye");
+  }
+  say(question, { literal: "yes" });
   record("ask_question");
-  /*
-  gather({
-    action: "ask_question",
-    input: ["dtmf"],
-    timeout: 3600,
-    actionOnEmptyResult: true,
-    numDigits: 1,
-  });*/
+  interview.answeredQuestions.push(question);
 };
 
 const goodbye = async (
@@ -118,7 +134,7 @@ const goodbye = async (
   _params: URLSearchParams,
 ) => {
   say("goodbye");
-  response.pause({ length: 3 });
+  response.pause({ length: 2 });
 };
 
 const hangup = async ({ response }: ActionResponses) => {

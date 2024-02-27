@@ -28,8 +28,8 @@ export const handler = async (
 ): Promise<APIGatewayProxyResult> => {
   const params = new URLSearchParams(event.body || "");
   const response = new twiml.VoiceResponse();
-  const say = (message: string, values?: { [key: string]: string }) => {
-    const text = getMessage(message, values);
+  const say = (message: string, values: { [key: string]: string } = {}) => {
+    const text = values["literal"] ? message : getMessage(message, values);
     response.say(
       {
         voice: "Google.en-GB-Standard-B",
@@ -75,6 +75,8 @@ export const handler = async (
   } catch (error) {
     console.error("Error handling call:", error);
     say("error");
+    response.pause({ length: 1 });
+    response.hangup();
     return render(response);
   }
 };
