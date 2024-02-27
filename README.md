@@ -1,8 +1,10 @@
-# Welcome to your CDK TypeScript project
+# RoboYoz
 
-This is a blank project for CDK development with TypeScript.
+## Deployment
 
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
+```sh
+npm run build && cdk deploy
+```
 
 ## Useful commands
 

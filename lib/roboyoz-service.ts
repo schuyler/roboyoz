@@ -5,6 +5,7 @@ import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import * as iam from "aws-cdk-lib/aws-iam";
 
+import { actions } from "../app/actions";
 import settings from "./settings.json";
 // import * as s3 from "aws-cdk-lib/aws-s3";
 
@@ -53,8 +54,7 @@ export default class RoboYozService extends Construct {
 
     api.root.addMethod("POST", roboYozIntegration);
 
-    const resources = ["request_subject", "choose_subject", "goodbye"];
-    resources.forEach((path) => {
+    Object.keys(actions).forEach((path) => {
       const resource = api.root.addResource(path);
       resource.addMethod("POST", roboYozIntegration);
     });

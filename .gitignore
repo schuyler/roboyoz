@@ -3,6 +3,7 @@
 *.d.ts
 node_modules
 dist
+lib/settings.json
 
 # CDK asset staging directory
 .cdk.staging
