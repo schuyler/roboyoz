@@ -1,10 +1,10 @@
 const messages: Record<string, string | string[]> = {
   greeting:
-    "Hello, and welcome to the Erle-Grey Wedding Podcast Interview Hotline. I am your host, NOT Yoz Grahame.",
+    "Hello, and welcome to the Erle-Grey Wedding Podcast Interview Hotline. I'm your host, NOT Yoz Grahame.",
   introduction:
     "I'd love to ask you a few questions for a one-off podcast episode about the bride and groom. " +
     "Your responses may be shared with the other wedding guests in whole, in part, or not at all, depending on how funny you are." +
-    "Please feel free to skip any questions you don't feel like answering. You're supposed to be having a good time, after all." +
+    "Please feel free to skip any questions you don't feel like answering." +
     "If you hang up or get disconnected, you can call back at any time and pick up where you left off.",
   welcome_back:
     "I see you've called before. Welcome back. Let's pick up where we left off. If you want to hear the intro again, press star now.",

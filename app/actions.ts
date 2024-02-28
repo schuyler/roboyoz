@@ -73,11 +73,12 @@ const request_subject = async (
     hints: "Schuyler, Besha",
     numDigits: 1,
     speechTimeout: "2",
+    actionOnEmptyResult: true,
   });
 };
 
 const choose_subject = async (
-  { say, redirect, record }: ActionResponses,
+  { say, redirect }: ActionResponses,
   params: URLSearchParams,
   { interview }: ActionContext,
 ) => {
@@ -151,7 +152,7 @@ const start_over = async (
   params: URLSearchParams,
   { interview }: ActionContext,
 ) => {
-  // Don't ask them to re-record the intro.
+  // Truncate the list of questions answered, but don't ask them to re-record the intro.
   interview.answeredQuestions.length = 1;
   interview.selectedTopic = "";
   interview.introduced = true;
@@ -163,13 +164,14 @@ const goodbye = async (
   { say, redirect, response }: ActionResponses,
   params: URLSearchParams,
 ) => {
-  // If they hit star to get here, we actually want to start over.
+  // If they hit star to get here, they actually want to start over.
   if (params.get("Digits")?.includes("*")) {
     redirect("start_over");
   }
   say("goodbye");
   response.pause({ length: 2 });
-  response.hangup();
+  // Explicit hangup might not be needed
+  // response.hangup();
 };
 
 export const actions: Record<string, Action> = {
