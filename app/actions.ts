@@ -35,7 +35,7 @@ const answer = async (
 ) => {
   response.pause({ length: 1 });
   say("greeting");
-  if (!interview.answeredQuestions) {
+  if (!interview.answeredQuestions.length) {
     say("introduction");
   } else {
     say("welcome_back");
