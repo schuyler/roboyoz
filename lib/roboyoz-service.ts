@@ -1,14 +1,19 @@
-// import * as cdk from "aws-cdk-lib";
+import * as fs from "fs";
+import * as path from "path";
+
 import { Construct } from "constructs";
+import { CfnOutput } from "aws-cdk-lib";
 import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
+import * as sns from "aws-cdk-lib/aws-sns";
 
 import { actions } from "../app/actions";
 import { tableName } from "../app/interview";
 import settings from "./settings.json";
+import { EmailSubscription } from "aws-cdk-lib/aws-sns-subscriptions";
 // import * as s3 from "aws-cdk-lib/aws-s3";
 
 export default class RoboYozService extends Construct {
@@ -42,17 +47,24 @@ export default class RoboYozService extends Construct {
     // Attach the IAM policy statement to the IAM user
     user.addToPolicy(putObjectPolicy);
 
+    const errorTopic = new sns.Topic(this, "ErrorTopic", {
+      displayName: "RoboYoz errors",
+    });
+    errorTopic.addSubscription(new EmailSubscription(settings.EMAIL));
+
     const handler = new lambda.Function(this, "RoboYoz", {
       runtime: lambda.Runtime.NODEJS_18_X,
       code: lambda.Code.fromAsset("dist/bundle.zip"),
       handler: "handler.handler",
       environment: {
+        SNS_ERROR_TOPIC: errorTopic.topicArn,
         ...settings,
       },
     });
 
     table.grantReadWriteData(handler);
     bucket.grantReadWrite(handler);
+    errorTopic.grantPublish(handler);
     handler.addToRolePolicy(
       new iam.PolicyStatement({
         actions: [

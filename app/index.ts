@@ -1,4 +1,5 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import { SNSClient, PublishCommand } from "@aws-sdk/client-sns";
 import { twiml } from "twilio";
 import {
   GatherAttributes,
@@ -21,6 +22,28 @@ const render = (
       "Content-Type": "application/xml",
     },
   };
+};
+
+const sendErrorToSNS = async (error: any) => {
+  try {
+    const client = new SNSClient({});
+    const exceptionMessage =
+      error instanceof Error
+        ? { Subject: error.message, Message: error.stack }
+        : { Subject: String(error).substring(0, 80), Message: String(error) };
+    const topicArn = process.env.SNS_ERROR_TOPIC;
+    if (!topicArn) {
+      throw new Error("Can't find SNS_ERROR_TOPIC to publish");
+    }
+    await client.send(
+      new PublishCommand({
+        ...exceptionMessage,
+        TopicArn: topicArn,
+      }),
+    );
+  } catch (snsError) {
+    console.error("Error publishing message to SNS topic:", snsError);
+  }
 };
 
 export const handler = async (
@@ -75,9 +98,9 @@ export const handler = async (
     return render(response);
   } catch (error) {
     console.error("Error handling call:", error);
+    sendErrorToSNS(error);
     say("error");
     response.pause({ length: 1 });
-    response.hangup();
     return render(response);
   }
 };
