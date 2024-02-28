@@ -39,7 +39,8 @@ const messages: Record<string, string | string[]> = {
     "Brilliant!",
   ],
   no_more_questions:
-    "That's all the questions we had for now! Well done. If you want to start over from the top, you can press star. To wrap up, press any other key.",
+    "That's all the questions we had for now! Well done. If you wish to start over, perhaps to answer questions about ${other} instead, you can press star." +
+    "To wrap up, press any other key.",
   goodbye:
     "Thanks for joining us for the podcast. We'll see you at the wedding! Bye!!!",
   error:

@@ -105,7 +105,7 @@ const choose_subject = async (
 };
 
 const ask_question = async (
-  { say, redirect, record }: ActionResponses,
+  { say, redirect, record, gather }: ActionResponses,
   params: URLSearchParams,
   { interview }: ActionContext,
 ) => {
@@ -126,22 +126,49 @@ const ask_question = async (
     interview.answeredQuestions,
   );
   if (!question) {
-    redirect("goodbye");
+    redirect("finished");
   }
   say(question, { literal: "yes" });
   record("ask_question");
   interview.answeredQuestions.push(question);
 };
 
-const goodbye = async (
-  { say, response }: ActionResponses,
-  _params: URLSearchParams,
+const finished = async (
+  { say, gather }: ActionResponses,
+  _: URLSearchParams,
 ) => {
-  say("goodbye");
-  response.pause({ length: 2 });
+  say("no_more_questions");
+  gather({
+    action: "goodbye",
+    input: ["dtmf"],
+    numDigits: 1,
+    timeout: 3,
+  });
 };
 
-const hangup = async ({ response }: ActionResponses) => {
+const start_over = async (
+  { say, redirect }: ActionResponses,
+  params: URLSearchParams,
+  { interview }: ActionContext,
+) => {
+  // Don't ask them to re-record the intro.
+  interview.answeredQuestions.length = 1;
+  interview.selectedTopic = "";
+  interview.introduced = true;
+  say("introduction");
+  redirect("choose_subject");
+};
+
+const goodbye = async (
+  { say, redirect, response }: ActionResponses,
+  params: URLSearchParams,
+) => {
+  // If they hit star to get here, we actually want to start over.
+  if (params.get("Digits")?.includes("*")) {
+    redirect("start_over");
+  }
+  say("goodbye");
+  response.pause({ length: 2 });
   response.hangup();
 };
 
@@ -151,6 +178,7 @@ export const actions: Record<string, Action> = {
   request_subject,
   choose_subject,
   ask_question,
+  finished,
+  start_over,
   goodbye,
-  hangup,
 };
