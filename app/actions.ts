@@ -85,7 +85,11 @@ const choose_subject = async (
   const result = params.get("SpeechResult")?.toLowerCase() || "";
   console.log("SpeechResult: " + result);
   let name = "";
-  if (digits == "1" || "bvptdf".includes(result[0])) {
+  if (digits == "*") {
+    // Oops, we want to hear the intro again.
+    say("introduction");
+    redirect("request_subject");
+  } else if (digits == "1" || "bvptdf".includes(result[0])) {
     name = "Besha";
   } else if (digits == "2" || result[0] == "s") {
     name = "Schuyler";

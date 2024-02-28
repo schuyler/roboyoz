@@ -35,7 +35,6 @@ export const handler = async (
         voice: "Google.en-GB-Standard-B",
         language: "en-GB",
       },
-      //`<prosody pitch="-15%" rate="85%">${text}</prosody>`,
       text,
     );
   };
