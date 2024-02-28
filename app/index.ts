@@ -7,7 +7,7 @@ import {
 import { URLSearchParams } from "url";
 
 import { actions } from "./actions";
-import { getMessage } from "./messages";
+import { voiceArgs, getMessage } from "./messages";
 import { loadInterview, saveInterview } from "./interview";
 
 const render = (
@@ -30,16 +30,18 @@ export const handler = async (
   const response = new twiml.VoiceResponse();
   const say = (message: string, values: { [key: string]: string } = {}) => {
     const text = values["literal"] ? message : getMessage(message, values);
-    response.say(
-      {
-        voice: "Google.en-GB-Standard-B",
-        language: "en-GB",
-      },
-      text,
-    );
+    return response.say(voiceArgs, text);
   };
-  const gather = (args: GatherAttributes) => {
-    response.gather(args);
+  const gather = (
+    args: GatherAttributes,
+    message: string = "",
+    values: { [_: string]: string } = {},
+  ) => {
+    const gatherResponse = response.gather(args);
+    if (message) {
+      gatherResponse.say(voiceArgs, getMessage(message, values));
+    }
+    return gatherResponse;
   };
   const redirect = (path: string) => {
     response.redirect(path);

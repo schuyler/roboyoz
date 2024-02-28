@@ -1,5 +1,5 @@
 import { Twilio, twiml } from "twilio";
-import {
+import VoiceResponse, {
   GatherAttributes,
   RecordAttributes,
 } from "twilio/lib/twiml/VoiceResponse";
@@ -7,8 +7,12 @@ import { Interview } from "./interview";
 import { getMessage } from "./messages";
 
 interface ActionResponses {
-  say: (message: string, values?: { [key: string]: string }) => void;
-  gather: (args: GatherAttributes) => void;
+  say: (message: string, values?: { [_: string]: string }) => VoiceResponse.Say;
+  gather: (
+    args: GatherAttributes,
+    message?: string,
+    values?: { [_: string]: string },
+  ) => VoiceResponse.Gather;
   redirect: (path: string) => void;
   record: (path: string, args?: RecordAttributes) => void;
   response: twiml.VoiceResponse;
@@ -31,7 +35,7 @@ const answer = async (
 ) => {
   response.pause({ length: 1 });
   say("greeting");
-  if (!interview.selectedTopic) {
+  if (!interview.answeredQuestions) {
     say("introduction");
   } else {
     say("welcome_back");
@@ -62,19 +66,21 @@ const record_call = async (
 };
 
 const request_subject = async (
-  { say, gather }: ActionResponses,
+  { gather }: ActionResponses,
   _params: URLSearchParams,
 ) => {
-  say("request_subject");
-  gather({
-    action: "choose_subject",
-    input: ["dtmf", "speech"],
-    speechModel: "phone_call",
-    hints: "Schuyler, Besha",
-    numDigits: 1,
-    speechTimeout: "2",
-    actionOnEmptyResult: true,
-  });
+  gather(
+    {
+      action: "choose_subject",
+      input: ["dtmf", "speech"],
+      speechModel: "phone_call",
+      hints: "Schuyler, Besha",
+      numDigits: 1,
+      speechTimeout: "2",
+      actionOnEmptyResult: true,
+    },
+    "request_subject",
+  );
 };
 
 const choose_subject = async (
@@ -106,7 +112,7 @@ const choose_subject = async (
 };
 
 const ask_question = async (
-  { say, redirect, record, gather }: ActionResponses,
+  { say, redirect, record }: ActionResponses,
   params: URLSearchParams,
   { interview }: ActionContext,
 ) => {
@@ -135,29 +141,33 @@ const ask_question = async (
 };
 
 const finished = async (
-  { say, gather }: ActionResponses,
+  { gather }: ActionResponses,
   _: URLSearchParams,
+  { interview }: ActionContext,
 ) => {
-  say("no_more_questions");
-  gather({
-    action: "goodbye",
-    input: ["dtmf"],
-    numDigits: 1,
-    timeout: 3,
-  });
+  const other = interview.selectedTopic == "Besha" ? "Schuyler" : "Besha";
+  gather(
+    {
+      action: "goodbye",
+      input: ["dtmf"],
+      numDigits: 1,
+      timeout: 3,
+    },
+    "no_more_questions",
+    { other },
+  );
 };
 
 const start_over = async (
-  { say, redirect }: ActionResponses,
-  params: URLSearchParams,
+  { redirect }: ActionResponses,
+  _params: URLSearchParams,
   { interview }: ActionContext,
 ) => {
   // Truncate the list of questions answered, but don't ask them to re-record the intro.
   interview.answeredQuestions.length = 1;
   interview.selectedTopic = "";
   interview.introduced = true;
-  say("introduction");
-  redirect("choose_subject");
+  redirect("request_subject");
 };
 
 const goodbye = async (
