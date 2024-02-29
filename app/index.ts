@@ -75,6 +75,7 @@ export const handler = async (
       timeout: 5,
       finishOnKey: "#*",
       playBeep: false,
+      recordingStatusCallback: "save_recording",
       ...args,
     });
   };

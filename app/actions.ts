@@ -4,6 +4,7 @@ import VoiceResponse, {
   RecordAttributes,
 } from "twilio/lib/twiml/VoiceResponse";
 import { Interview } from "./interview";
+import { Recording, saveRecording } from "./recording";
 import { getMessage } from "./messages";
 
 interface ActionResponses {
@@ -28,6 +29,30 @@ type Action = (
   context: ActionContext,
 ) => Promise<void>;
 
+const save_recording = async (
+  _: ActionResponses,
+  params: URLSearchParams,
+  { interview }: ActionContext,
+) => {
+  if (params.get("RecordingStatus") != "completed") {
+    return;
+  }
+  const recordingSid = params.get("RecordingSid");
+  if (!recordingSid) {
+    throw new Error("RecordingSid is required");
+  }
+  const details: Recording = {
+    recordingSid: recordingSid,
+    callSid: params.get("CallSid") || "",
+    uri: params.get("RecordingUrl") || "",
+    duration: parseInt(params.get("RecordingDuration") || "0", 10),
+    phoneNumber: interview.phoneNumber,
+    topic: interview.selectedTopic,
+    question: interview.answeredQuestions.slice(-1)[0] || "",
+  };
+  saveRecording(details);
+};
+
 const answer = async (
   { say, redirect, response }: ActionResponses,
   _params: URLSearchParams,
@@ -41,27 +66,6 @@ const answer = async (
     say("welcome_back");
   }
   interview.introduced = true;
-  redirect("request_subject");
-};
-
-// this is actually not used
-const record_call = async (
-  { redirect }: ActionResponses,
-  params: URLSearchParams,
-) => {
-  const client = new Twilio(
-    process.env.TWILIO_ACCOUNT_SID,
-    process.env.TWILIO_AUTH_TOKEN,
-  );
-  const callSid = params.get("CallSid");
-
-  if (callSid) {
-    // https://www.twilio.com/docs/voice/api/recording?code-sample=code-create-recording-on-a-live-call&code-language=Node.js&code-sdk-version=4.x
-    await client.calls(callSid).recordings.create({
-      trim: "trim-silence",
-      recordingTrack: "inbound",
-    });
-  }
   redirect("request_subject");
 };
 
@@ -186,7 +190,7 @@ const goodbye = async (
 
 export const actions: Record<string, Action> = {
   answer,
-  record_call,
+  save_recording,
   request_subject,
   choose_subject,
   ask_question,

@@ -1,8 +1,4 @@
-import * as fs from "fs";
-import * as path from "path";
-
 import { Construct } from "constructs";
-import { CfnOutput } from "aws-cdk-lib";
 import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as s3 from "aws-cdk-lib/aws-s3";
@@ -11,7 +7,8 @@ import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as sns from "aws-cdk-lib/aws-sns";
 
 import { actions } from "../app/actions";
-import { tableName } from "../app/interview";
+import * as interview from "../app/interview";
+import * as recording from "../app/recording";
 import settings from "./settings.json";
 import { EmailSubscription } from "aws-cdk-lib/aws-sns-subscriptions";
 // import * as s3 from "aws-cdk-lib/aws-s3";
@@ -20,10 +17,18 @@ export default class RoboYozService extends Construct {
   constructor(scope: Construct, id: string) {
     super(scope, id);
 
-    const table = new dynamodb.Table(this, tableName, {
-      tableName: tableName,
+    const interviewTable = new dynamodb.Table(this, interview.tableName, {
+      tableName: interview.tableName,
       partitionKey: {
         name: "phoneNumber",
+        type: dynamodb.AttributeType.STRING,
+      },
+    });
+
+    const recordingTable = new dynamodb.Table(this, recording.tableName, {
+      tableName: recording.tableName,
+      partitionKey: {
+        name: "recordingSid",
         type: dynamodb.AttributeType.STRING,
       },
     });
@@ -62,7 +67,8 @@ export default class RoboYozService extends Construct {
       },
     });
 
-    table.grantReadWriteData(handler);
+    interviewTable.grantReadWriteData(handler);
+    recordingTable.grantReadWriteData(handler);
     bucket.grantReadWrite(handler);
     errorTopic.grantPublish(handler);
     handler.addToRolePolicy(
