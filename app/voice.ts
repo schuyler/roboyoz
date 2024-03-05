@@ -5,10 +5,10 @@ import {
   RecordAttributes,
 } from "twilio/lib/twiml/VoiceResponse";
 
-import { ActionResponses } from "./actions";
+import { ActionResponse } from "./actions";
 import { voiceArgs, getMessage } from "./messages";
 
-export const createVoiceResponse = (): ActionResponses => {
+export const createVoiceResponse = (): ActionResponse => {
   const response = new twiml.VoiceResponse();
   const say = (message: string, values: { [key: string]: string } = {}) => {
     const text = getMessage(message, values);

@@ -9,7 +9,7 @@ import { APIGatewayProxyResult } from "aws-lambda";
 
 export type ActionParams = { [_: string]: string };
 
-export type ActionResponses = {
+export type ActionResponse = {
   say: (message: string, values?: { [_: string]: string }) => void;
   gather: (
     args: GatherAttributes,
@@ -27,7 +27,7 @@ interface ActionContext {
 }
 
 type Action = (
-  funcs: ActionResponses,
+  funcs: ActionResponse,
   params: ActionParams,
   context: ActionContext,
 ) => Promise<void>;

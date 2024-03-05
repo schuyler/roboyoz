@@ -1,6 +1,6 @@
 import { APIGatewayProxyResult, APIGatewayProxyEvent } from "aws-lambda";
 import { createVoiceResponse } from "./voice";
-import { ActionParams, ActionResponses, actions } from "./actions";
+import { ActionParams, ActionResponse, actions } from "./actions";
 import { loadInterview, saveInterview } from "./interview";
 import { sendErrorToSNS } from "./error";
 import { getCallerName } from "./caller";
@@ -9,7 +9,7 @@ import { createWebResponse } from "./web";
 const handler = async (
   event: APIGatewayProxyEvent,
   params: ActionParams,
-  response: ActionResponses,
+  response: ActionResponse,
 ): Promise<APIGatewayProxyResult> => {
   try {
     const caller = params.From;

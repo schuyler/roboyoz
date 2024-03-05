@@ -1,6 +1,6 @@
 import { APIGatewayProxyResult } from "aws-lambda";
-import { ActionResponses } from "./actions";
-import { voiceArgs, getMessage } from "./messages";
+import { ActionResponse } from "./actions";
+import { getMessage } from "./messages";
 
 // just for the argument types
 import {
@@ -15,7 +15,7 @@ type WebResponse = {
   record?: string;
 };
 
-export const createWebResponse = (): ActionResponses => {
+export const createWebResponse = (): ActionResponse => {
   const response: WebResponse = { say: [] };
   const say = (message: string, values: { [key: string]: string } = {}) => {
     const text = values["literal"] ? message : getMessage(message, values);
