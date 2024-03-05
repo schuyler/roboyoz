@@ -19,7 +19,7 @@ export const handler = async (
   event: APIGatewayProxyEvent,
 ): Promise<APIGatewayProxyResult> => {
   let params: ActionParams, response: ActionResponses;
-  const isCall = true;
+  const isCall = !event.headers["Content-Type"]?.startsWith("application/json");
   if (isCall) {
     params = extractParams(new URLSearchParams(event.body || ""));
     response = createVoiceResponse();
@@ -27,7 +27,6 @@ export const handler = async (
     params = JSON.parse(event.body || "{}");
     response = createWebResponse();
   }
-
   try {
     const caller = params.From;
     if (!caller) {
