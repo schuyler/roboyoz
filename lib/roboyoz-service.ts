@@ -60,7 +60,7 @@ export default class RoboYozService extends Construct {
     const handler = new lambda.Function(this, "RoboYoz", {
       runtime: lambda.Runtime.NODEJS_18_X,
       code: lambda.Code.fromAsset("dist/bundle.zip"),
-      handler: "handler.handler",
+      handler: "handler.voiceHandler",
       environment: {
         SNS_ERROR_TOPIC: errorTopic.topicArn,
         ...settings,
