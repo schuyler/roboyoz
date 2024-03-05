@@ -1,18 +1,35 @@
 import { APIGatewayProxyResult, APIGatewayProxyEvent } from "aws-lambda";
 import { createVoiceResponse } from "./voice";
-import { actions } from "./actions";
+import { ActionParams, ActionResponses, actions } from "./actions";
 import { loadInterview, saveInterview } from "./interview";
 import { sendErrorToSNS } from "./error";
 import { getCallerName } from "./caller";
+import { createWebResponse } from "./web";
 
-export const voiceHandler = async (
+// Provide a function that extracts a URLSearchParams object into a regular TypeScript object
+function extractParams(params: URLSearchParams): ActionParams {
+  const result: ActionParams = {};
+  for (const [key, value] of params) {
+    result[key] = value;
+  }
+  return result;
+}
+
+export const handler = async (
   event: APIGatewayProxyEvent,
 ): Promise<APIGatewayProxyResult> => {
-  const params = new URLSearchParams(event.body || "");
-  const response = createVoiceResponse();
+  let params: ActionParams, response: ActionResponses;
+  const isCall = true;
+  if (isCall) {
+    params = extractParams(new URLSearchParams(event.body || ""));
+    response = createVoiceResponse();
+  } else {
+    params = JSON.parse(event.body || "{}");
+    response = createWebResponse();
+  }
 
   try {
-    const caller = params.get("From");
+    const caller = params.From;
     if (!caller) {
       throw new Error("Caller could not be identified");
     }

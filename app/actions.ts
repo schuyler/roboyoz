@@ -1,4 +1,4 @@
-import VoiceResponse, {
+import {
   GatherAttributes,
   RecordAttributes,
 } from "twilio/lib/twiml/VoiceResponse";
@@ -7,18 +7,20 @@ import { Recording, saveRecording } from "./recording";
 import { getMessage } from "./messages";
 import { APIGatewayProxyResult } from "aws-lambda";
 
-export type ActionResponses {
+export type ActionParams = { [_: string]: string };
+
+export type ActionResponses = {
   say: (message: string, values?: { [_: string]: string }) => void;
   gather: (
     args: GatherAttributes,
     message?: string,
-    values?: { [_: string]: string },
-  ) => VoiceResponse.Gather;
+    values?: ActionParams,
+  ) => void;
   pause: (seconds: number) => void;
   redirect: (path: string) => void;
   record: (path: string, args?: RecordAttributes) => void;
   render: (status?: number) => APIGatewayProxyResult;
-}
+};
 
 interface ActionContext {
   interview: Interview;
@@ -26,27 +28,23 @@ interface ActionContext {
 
 type Action = (
   funcs: ActionResponses,
-  params: URLSearchParams,
+  params: ActionParams,
   context: ActionContext,
 ) => Promise<void>;
 
-const save_recording = async (
-  _: ActionResponses,
-  params: URLSearchParams,
-  { interview }: ActionContext,
-) => {
-  if (params.get("RecordingStatus") != "completed") {
+const save_recording: Action = async (_, params, { interview }) => {
+  if (params.RecordingStatus != "completed") {
     return;
   }
-  const recordingSid = params.get("RecordingSid");
+  const recordingSid = params.RecordingSid;
   if (!recordingSid) {
     throw new Error("RecordingSid is required");
   }
   const details: Recording = {
     recordingSid: recordingSid,
-    callSid: params.get("CallSid") || "",
-    uri: params.get("RecordingUrl") || "",
-    duration: parseInt(params.get("RecordingDuration") || "0", 10),
+    callSid: params.CallSid || "",
+    uri: params.RecordingUrl || "",
+    duration: parseInt(params.RecordingDuration || "0", 10),
     phoneNumber: interview.phoneNumber,
     topic: interview.selectedTopic,
     question: interview.answeredQuestions.slice(-1)[0] || "",
@@ -54,11 +52,7 @@ const save_recording = async (
   saveRecording(details);
 };
 
-const answer = async (
-  { say, redirect, pause }: ActionResponses,
-  _params: URLSearchParams,
-  { interview }: ActionContext,
-) => {
+const answer: Action = async ({ say, redirect, pause }, _, { interview }) => {
   pause(1);
   say("greeting");
   if (!interview.answeredQuestions.length) {
@@ -70,10 +64,7 @@ const answer = async (
   redirect("request_subject");
 };
 
-const request_subject = async (
-  { gather }: ActionResponses,
-  _params: URLSearchParams,
-) => {
+const request_subject: Action = async ({ gather }) => {
   gather(
     {
       action: "choose_subject",
@@ -88,13 +79,13 @@ const request_subject = async (
   );
 };
 
-const choose_subject = async (
-  { say, redirect }: ActionResponses,
-  params: URLSearchParams,
-  { interview }: ActionContext,
+const choose_subject: Action = async (
+  { say, redirect },
+  params,
+  { interview },
 ) => {
-  const digits = params.get("Digits") || "";
-  const result = params.get("SpeechResult")?.toLowerCase() || "";
+  const digits = params.Digits || "";
+  const result = params.SpeechResult?.toLowerCase() || "";
   console.log("SpeechResult: " + result);
   let name = "";
   if (digits == "*") {
@@ -116,16 +107,16 @@ const choose_subject = async (
   redirect("ask_question");
 };
 
-const ask_question = async (
-  { say, redirect, record }: ActionResponses,
-  params: URLSearchParams,
-  { interview }: ActionContext,
+const ask_question: Action = async (
+  { say, redirect, record },
+  params,
+  { interview },
 ) => {
   const topic = interview.selectedTopic;
   if (!topic) {
     throw new Error("Interview is missing a topic");
   }
-  if (params.get("Digits")?.includes("*")) {
+  if (params.Digits?.includes("*")) {
     interview.answeredQuestions.splice(-2);
   } else if (interview.introduced) {
     interview.introduced = false;
@@ -145,11 +136,7 @@ const ask_question = async (
   interview.answeredQuestions.push(question);
 };
 
-const finished = async (
-  { gather }: ActionResponses,
-  _: URLSearchParams,
-  { interview }: ActionContext,
-) => {
+const finished: Action = async ({ gather }, _, { interview }) => {
   const other = interview.selectedTopic == "Besha" ? "Schuyler" : "Besha";
   gather(
     {
@@ -163,11 +150,7 @@ const finished = async (
   );
 };
 
-const start_over = async (
-  { redirect }: ActionResponses,
-  _params: URLSearchParams,
-  { interview }: ActionContext,
-) => {
+const start_over: Action = async ({ redirect }, _, { interview }) => {
   // Truncate the list of questions answered, but don't ask them to re-record the intro.
   interview.answeredQuestions.length = 1;
   interview.selectedTopic = "";
@@ -175,12 +158,9 @@ const start_over = async (
   redirect("request_subject");
 };
 
-const goodbye = async (
-  { say, redirect, pause }: ActionResponses,
-  params: URLSearchParams,
-) => {
+const goodbye: Action = async ({ say, redirect, pause }, params) => {
   // If they hit star to get here, they actually want to start over.
-  if (params.get("Digits")?.includes("*")) {
+  if (params.Digits?.includes("*")) {
     redirect("start_over");
   }
   say("goodbye");
