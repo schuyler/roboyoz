@@ -61,6 +61,9 @@ export const getMessage = (
   values: { [key: string]: string } = {},
   exclude?: string[],
 ) => {
+  if (values.literal) {
+    return slug;
+  }
   const value = messages[slug];
   if (!value) {
     throw new Error(`Missing message: ${slug}`);

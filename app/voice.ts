@@ -11,7 +11,7 @@ import { voiceArgs, getMessage } from "./messages";
 export const createVoiceResponse = (): ActionResponses => {
   const response = new twiml.VoiceResponse();
   const say = (message: string, values: { [key: string]: string } = {}) => {
-    const text = values["literal"] ? message : getMessage(message, values);
+    const text = getMessage(message, values);
     return response.say(voiceArgs, text);
   };
   const gather = (
