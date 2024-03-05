@@ -41,7 +41,9 @@ export async function saveRecording(recording: Recording): Promise<void> {
 }
 
 // Function to get a recording from DynamoDB using the recordingSid
-export async function loadRecording(recordingSid: string): Promise<Recording> {
+export async function loadRecording(
+  recordingSid: string,
+): Promise<Recording | undefined> {
   // Define parameters for DocumentClient get operation
   const params = new GetCommand({
     TableName: tableName,
@@ -53,7 +55,7 @@ export async function loadRecording(recordingSid: string): Promise<Recording> {
     // Call DocumentClient get operation
     const data = await docClient.send(params);
     // Parse retrieved data into Recording object
-    return data.Item as Recording;
+    return data.Item as Recording; // what happens if data is empty
   } catch (error: any) {
     // Throw exception if error occurs
     throw new Error(`Error saving recording data: ${(error as Error).message}`);

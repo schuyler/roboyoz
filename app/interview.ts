@@ -12,6 +12,7 @@ const client = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(client);
 
 export type Interview = {
+  callerName: string;
   phoneNumber: string;
   introduced: boolean;
   selectedTopic: string;
@@ -35,6 +36,7 @@ export async function loadInterview(phoneNumber: string): Promise<Interview> {
     // If no data found, return initialized Interview object
     if (!data.Item) {
       return {
+        callerName: "",
         phoneNumber: phoneNumber,
         introduced: false,
         selectedTopic: "",

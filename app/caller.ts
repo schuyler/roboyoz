@@ -6,9 +6,9 @@ const client = new Twilio(
 );
 
 // Use Twilio Lookup to get caller's name (costs $.01 per lookup)
-export async function getCallerName(phoneNumber: string) {
+export async function getCallerName(phoneNumber: string): Promise<string> {
   const callerDetails = await client.lookups.v2
     .phoneNumbers(phoneNumber)
     .fetch({ fields: "caller_name" });
-  return callerDetails.callerName.caller_name;
+  return (callerDetails?.callerName?.caller_name || "") as string;
 }

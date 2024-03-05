@@ -1,4 +1,3 @@
-import { Twilio, twiml } from "twilio";
 import VoiceResponse, {
   GatherAttributes,
   RecordAttributes,
@@ -6,17 +5,19 @@ import VoiceResponse, {
 import { Interview } from "./interview";
 import { Recording, saveRecording } from "./recording";
 import { getMessage } from "./messages";
+import { APIGatewayProxyResult } from "aws-lambda";
 
-interface ActionResponses {
-  say: (message: string, values?: { [_: string]: string }) => VoiceResponse.Say;
+export type ActionResponses {
+  say: (message: string, values?: { [_: string]: string }) => void;
   gather: (
     args: GatherAttributes,
     message?: string,
     values?: { [_: string]: string },
   ) => VoiceResponse.Gather;
+  pause: (seconds: number) => void;
   redirect: (path: string) => void;
   record: (path: string, args?: RecordAttributes) => void;
-  response: twiml.VoiceResponse;
+  render: (status?: number) => APIGatewayProxyResult;
 }
 
 interface ActionContext {
@@ -54,11 +55,11 @@ const save_recording = async (
 };
 
 const answer = async (
-  { say, redirect, response }: ActionResponses,
+  { say, redirect, pause }: ActionResponses,
   _params: URLSearchParams,
   { interview }: ActionContext,
 ) => {
-  response.pause({ length: 1 });
+  pause(1);
   say("greeting");
   if (!interview.answeredQuestions.length) {
     say("introduction");
@@ -175,7 +176,7 @@ const start_over = async (
 };
 
 const goodbye = async (
-  { say, redirect, response }: ActionResponses,
+  { say, redirect, pause }: ActionResponses,
   params: URLSearchParams,
 ) => {
   // If they hit star to get here, they actually want to start over.
@@ -183,9 +184,7 @@ const goodbye = async (
     redirect("start_over");
   }
   say("goodbye");
-  response.pause({ length: 2 });
-  // Explicit hangup might not be needed
-  // response.hangup();
+  pause(2);
 };
 
 export const actions: Record<string, Action> = {
