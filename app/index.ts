@@ -16,11 +16,11 @@ const handler = async (
     if (!caller) {
       throw new Error("Caller could not be identified");
     }
-    const path = event.path.substring(1) || "answer";
+    const path = event.path.split("/").filter((s) => s)[-1] || "answer";
     console.log(`Call from ${caller} for ${path}`);
     const action = actions[path];
     if (!action) {
-      throw new Error("Action could not be identified");
+      throw new Error(`Action could not be identified: ${path}`);
     }
     const interview = await loadInterview(caller);
     if (!interview.callerName) {
