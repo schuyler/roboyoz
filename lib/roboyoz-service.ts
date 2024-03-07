@@ -112,7 +112,7 @@ export default class RoboYozService extends Construct {
 
       // Create a resource at the root of the API for the Lambda function
       const resource = api.root.addResource(path);
-      const integration = new apigateway.LambdaIntegration(voiceHandler);
+      const integration = new apigateway.LambdaIntegration(handler);
       resource.addMethod("POST", integration);
 
       // Create a resource for each action in the app
