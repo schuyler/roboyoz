@@ -28,7 +28,7 @@ const messages: Record<string, string | string[]> = {
   schuyler_questions: [
     "First off, would you please introduce yourself to our listeners, and say a few words about who you are?",
     "How do you know Schuyler?",
-    "Tell us your favorite story about Schuyler. It could be something charming, humorous, or, ideally, a little embarrassing. Or, we call it in England, 'taking the piss'.",
+    "Tell us your favorite story about Schuyler. It could be something charming, humorous, or, ideally, a little embarrassing. Or, as we call it in England, 'taking the piss'.",
     "What's Schuyler's favorite food?",
     "What's one thing you that you think Besha ought to know about Schuyler?",
     "Do you have any advice for the soon-to-be newlyweds?",
@@ -42,6 +42,7 @@ const messages: Record<string, string | string[]> = {
     "Lovely.",
     "Brilliant!",
   ],
+  skip: ["Right then.", "Got it.", "Okay.", "Sure.", "Moving along."],
   no_more_questions:
     "That's all the questions we had for now! Well done. If you wish to start over, perhaps to answer questions about ${other} instead, you can press star." +
     "To wrap up, press any other key.",

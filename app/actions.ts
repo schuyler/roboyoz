@@ -117,7 +117,10 @@ const ask_question: Action = async (
     throw new Error("Interview is missing a topic");
   }
   if (params.Digits?.includes("*")) {
+    say("skip");
     interview.answeredQuestions.splice(-2);
+  } else if (params.Digits?.includes("#")) {
+    say("skip");
   } else if (interview.introduced) {
     interview.introduced = false;
   } else {
@@ -128,8 +131,10 @@ const ask_question: Action = async (
     {},
     interview.answeredQuestions,
   );
+  console.log("Asking question: " + question);
   if (!question) {
     redirect("finished");
+    return;
   }
   say(question, { literal: "yes" });
   record("ask_question");
