@@ -62,6 +62,7 @@ export default class RoboYozService extends Construct {
     const lambdaConfig = {
       runtime: lambda.Runtime.NODEJS_18_X,
       code: lambda.Code.fromAsset("dist/bundle.zip"),
+      logRetention: 180, // six months
       environment: {
         SNS_ERROR_TOPIC: errorTopic.topicArn,
         ...settings,
