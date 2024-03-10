@@ -8,7 +8,7 @@ import * as sns from "aws-cdk-lib/aws-sns";
 
 import { actions } from "../app/actions";
 import * as interview from "../app/interview";
-import * as recording from "../app/recording";
+import * as call from "../app/call";
 import settings from "./settings.json";
 import { EmailSubscription } from "aws-cdk-lib/aws-sns-subscriptions";
 // import * as s3 from "aws-cdk-lib/aws-s3";
@@ -27,10 +27,10 @@ export default class RoboYozService extends Construct {
     });
 
     // Create a DynamoDB table to store recording data
-    const recordingTable = new dynamodb.Table(this, recording.tableName, {
-      tableName: recording.tableName,
+    const callTable = new dynamodb.Table(this, call.tableName, {
+      tableName: call.tableName,
       partitionKey: {
-        name: "recordingSid",
+        name: "callSid",
         type: dynamodb.AttributeType.STRING,
       },
     });
@@ -94,7 +94,7 @@ export default class RoboYozService extends Construct {
     for (const [path, handler] of lambdaFunctions) {
       // Grant DynamoDB permissions to the Lambda function
       interviewTable.grantReadWriteData(handler);
-      recordingTable.grantReadWriteData(handler);
+      callTable.grantReadWriteData(handler);
       // Grant S3 permissions to the Lambda function
       bucket.grantReadWrite(handler);
       // Grant SNS permissions to the Lambda function

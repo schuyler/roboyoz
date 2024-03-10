@@ -1,6 +1,5 @@
-// DynamoDB model to store Twilio recording data
-// New records will be created by the parameters sent by the TwiML <Record> verb.
-
+// DynamoDB model to store Twilio call data
+//
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
   DynamoDBDocumentClient,
@@ -8,56 +7,47 @@ import {
   GetCommand,
 } from "@aws-sdk/lib-dynamodb";
 
-export const tableName = "RoboYoz_Recordings";
+export const tableName = "RoboYoz_Calls";
 
 // Subset of the Twilio recording type
-export type Recording = {
+export type Call = {
   callSid: string;
-  recordingSid: string;
-  uri: string;
-  duration: number;
   phoneNumber: string;
-  topic: string;
-  question: string;
 };
 
 const client = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(client);
 
 // Function to save a Recording object to DynamoDB
-export async function saveRecording(recording: Recording): Promise<void> {
+export async function saveCall(call: Call): Promise<void> {
   // Define parameters for DocumentClient put operation
   const params = new PutCommand({
     TableName: tableName,
-    Item: recording,
+    Item: call,
   });
 
   try {
     await docClient.send(params);
   } catch (error: any) {
     // Throw exception if error occurs
-    throw new Error(`Error saving recording data: ${(error as Error).message}`);
+    throw new Error(`Error saving call: ${(error as Error).message}`);
   }
 }
 
 // Function to get a recording from DynamoDB using the recordingSid
-export async function loadRecording(
-  recordingSid: string,
-): Promise<Recording | undefined> {
+export async function loadCall(callSid: string): Promise<Call | undefined> {
   // Define parameters for DocumentClient get operation
   const params = new GetCommand({
     TableName: tableName,
-    Key: {
-      recordingSid: recordingSid,
-    },
+    Key: { callSid },
   });
   try {
     // Call DocumentClient get operation
     const data = await docClient.send(params);
     // Parse retrieved data into Recording object
-    return data.Item as Recording; // what happens if data is empty
+    return data.Item as Call; // what happens if data is empty
   } catch (error: any) {
     // Throw exception if error occurs
-    throw new Error(`Error saving recording data: ${(error as Error).message}`);
+    throw new Error(`Error loading call: ${(error as Error).message}`);
   }
 }

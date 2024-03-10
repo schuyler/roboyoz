@@ -11,12 +11,23 @@ export const tableName = "RoboYoz_Interviews";
 const client = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(client);
 
+export type Recording = {
+  callSid: string;
+  recordingSid: string;
+  uri: string;
+  duration: number;
+  topic: string;
+  question: string;
+};
+
 export type Interview = {
   callerName: string;
   phoneNumber: string;
   introduced: boolean;
   selectedTopic: string;
   answeredQuestions: string[];
+  calls: string[];
+  recordings: Recording[];
 };
 
 // Function to retrieve or initialize Interview object
@@ -41,11 +52,16 @@ export async function loadInterview(phoneNumber: string): Promise<Interview> {
         introduced: false,
         selectedTopic: "",
         answeredQuestions: [],
+        calls: [],
+        recordings: [],
       };
     }
 
     // Parse retrieved data into Interview object
-    return data.Item as Interview;
+    return {
+      ...data.Item,
+      recordings: JSON.parse(data.Item.recordings),
+    } as Interview;
   } catch (error: any) {
     // Throw exception if error occurs
     throw new Error(
@@ -60,12 +76,11 @@ export async function saveInterview(interview: Interview): Promise<void> {
     // Define parameters for DocumentClient put operation
     const params = new PutCommand({
       TableName: tableName,
-      Item: interview,
+      Item: { ...interview, recordings: JSON.stringify(interview.recordings) },
     });
 
     // Call DocumentClient put operation
     await docClient.send(params);
-    console.log("Interview record saved successfully.");
   } catch (error: any) {
     // Throw exception if error occurs
     throw new Error(`Error saving interview data: ${(error as Error).message}`);

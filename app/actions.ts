@@ -2,8 +2,7 @@ import {
   GatherAttributes,
   RecordAttributes,
 } from "twilio/lib/twiml/VoiceResponse";
-import { Interview } from "./interview";
-import { Recording, saveRecording } from "./recording";
+import { Recording, Interview } from "./interview";
 import { getMessage } from "./messages";
 import { APIGatewayProxyResult } from "aws-lambda";
 
@@ -36,20 +35,15 @@ const save_recording: Action = async (_, params, { interview }) => {
   if (params.RecordingStatus != "completed") {
     return;
   }
-  const recordingSid = params.RecordingSid;
-  if (!recordingSid) {
-    throw new Error("RecordingSid is required");
-  }
   const details: Recording = {
-    recordingSid: recordingSid,
+    recordingSid: params.recordingSid || "",
     callSid: params.CallSid || "",
     uri: params.RecordingUrl || "",
     duration: parseInt(params.RecordingDuration || "0", 10),
-    phoneNumber: interview.phoneNumber,
     topic: interview.selectedTopic,
     question: interview.answeredQuestions.slice(-1)[0] || "",
   };
-  saveRecording(details);
+  interview.recordings.push(details);
 };
 
 const answer: Action = async ({ say, redirect, pause }, _, { interview }) => {
@@ -60,7 +54,6 @@ const answer: Action = async ({ say, redirect, pause }, _, { interview }) => {
   } else {
     say("welcome_back");
   }
-  interview.introduced = true;
   redirect("request_subject");
 };
 
@@ -116,15 +109,14 @@ const ask_question: Action = async (
   if (!topic) {
     throw new Error("Interview is missing a topic");
   }
-  if (params.Digits?.includes("*")) {
-    say("skip");
-    interview.answeredQuestions.splice(-2);
-  } else if (params.Digits?.includes("#")) {
-    say("skip");
-  } else if (interview.introduced) {
-    interview.introduced = false;
-  } else {
+  const duration = parseInt(params.RecordingDuration || "0", 10);
+  if (duration > 5) {
     say("interstitial");
+  } else if (duration > 0) {
+    say("skip");
+  }
+  if (params.Digits?.includes("*")) {
+    interview.answeredQuestions.splice(-2);
   }
   const question = getMessage(
     topic.toLowerCase() + "_questions",
@@ -159,7 +151,6 @@ const start_over: Action = async ({ redirect }, _, { interview }) => {
   // Truncate the list of questions answered, but don't ask them to re-record the intro.
   interview.answeredQuestions.length = 1;
   interview.selectedTopic = "";
-  interview.introduced = true;
   redirect("request_subject");
 };
 

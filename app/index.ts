@@ -3,8 +3,9 @@ import { createVoiceResponse } from "./voice";
 import { ActionParams, ActionResponse, actions } from "./actions";
 import { loadInterview, saveInterview } from "./interview";
 import { sendErrorToSNS } from "./error";
-import { getCallerName } from "./caller";
+import { getCallerName } from "./caller_id";
 import { createWebResponse } from "./web";
+import { saveCall, loadCall } from "./call";
 
 const handler = async (
   event: APIGatewayProxyEvent,
@@ -12,10 +13,22 @@ const handler = async (
   response: ActionResponse,
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const caller = params.From;
+    // get the caller's phone number from the event parameters
+    let [caller, callSid] = [params.From, params.CallSid];
     if (!caller) {
-      throw new Error("Caller could not be identified");
+      // if the caller's phone number is not in the event parameters, try to load it from the callSid
+      if (callSid) {
+        const call = await loadCall(callSid);
+        if (call) {
+          caller = call.phoneNumber;
+        }
+      }
+      // if the caller's phone number is still not found, throw an error
+      if (!caller) {
+        throw new Error("Caller could not be identified");
+      }
     }
+    // get the mode (i.e. voice/web) and path from the event parameters
     const [_mode, path] = event.path.split("/").filter((s) => s);
     console.log(`Call from ${caller} for ${path}`);
     // get the action from the actions object using the last element of the path
@@ -25,12 +38,19 @@ const handler = async (
     }
     // load the interview from the database using the caller's phone number
     const interview = await loadInterview(caller);
+    // if the caller's name is not in the interview, try to get it from the caller ID
     if (!interview.callerName) {
       interview.callerName = (await getCallerName(caller)) || caller;
     }
+    // call the action with the response, parameters, and interview
     await action(response, params, {
       interview,
     });
+    // if the callSid isn't in the interview's calls, add it to the calls array
+    if (callSid && !interview.calls.includes(callSid)) {
+      interview.calls.push(callSid);
+      await saveCall({ callSid, phoneNumber: caller });
+    }
     await saveInterview(interview); // maybe don't want to do this every single call
     return response.render();
   } catch (error) {
@@ -38,7 +58,7 @@ const handler = async (
     sendErrorToSNS(error);
     response.say("error");
     response.pause(1);
-    return response.render(500);
+    return response.render();
   }
 };
 
