@@ -5,7 +5,7 @@ import {
   RecordAttributes,
 } from "twilio/lib/twiml/VoiceResponse";
 
-import { ActionResponse } from "./actions";
+import { Action, ActionResponse } from "./actions";
 import { voiceArgs, getMessage } from "./messages";
 
 export const createVoiceResponse = (): ActionResponse => {
@@ -15,11 +15,14 @@ export const createVoiceResponse = (): ActionResponse => {
     return response.say(voiceArgs, text);
   };
   const gather = (
+    target: Action,
     args: GatherAttributes,
     message: string = "",
     values: { [_: string]: string } = {},
   ) => {
     const gatherResponse = response.gather({
+      action: target.name,
+      input: ["dtmf"],
       numDigits: 1,
       actionOnEmptyResult: true,
       ...args,
@@ -28,12 +31,12 @@ export const createVoiceResponse = (): ActionResponse => {
       gatherResponse.say(voiceArgs, getMessage(message, values));
     }
   };
-  const redirect = (path: string) => {
-    response.redirect(path);
+  const redirect = (target: Action) => {
+    response.redirect(target.name);
   };
-  const record = (action: string, args: RecordAttributes = {}) => {
+  const record = (target: Action, args: RecordAttributes = {}) => {
     response.record({
-      action,
+      action: target.name,
       timeout: 5,
       finishOnKey: "#*0",
       playBeep: false,

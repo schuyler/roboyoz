@@ -1,5 +1,5 @@
 import { APIGatewayProxyResult } from "aws-lambda";
-import { ActionResponse } from "./actions";
+import { Action, ActionResponse } from "./actions";
 import { getMessage } from "./messages";
 
 // just for the argument types
@@ -12,7 +12,7 @@ type WebResponse = {
   say: { text: string; uri?: string }[];
   gather?: GatherAttributes;
   redirect?: string;
-  record?: string;
+  record?: Record<string, any>;
 };
 
 export const createWebResponse = (): ActionResponse => {
@@ -22,21 +22,21 @@ export const createWebResponse = (): ActionResponse => {
     response.say.push({ text });
   };
   const gather = (
+    target: Action,
     args: GatherAttributes,
     message: string = "",
     values: { [_: string]: string } = {},
   ) => {
-    response.gather = args;
+    response.gather = { action: target.name, ...args };
     if (message) {
       say(message, values);
     }
   };
-  const redirect = (path: string) => {
-    response.redirect = path;
+  const redirect = (target: Action) => {
+    response.redirect = target.name;
   };
-  const record = (action: string, args: RecordAttributes = {}) => {
-    response.record = "save_recording";
-    response.redirect = action;
+  const record = (target: Action, args: RecordAttributes = {}) => {
+    response.record = { action: target.name, ...args };
   };
   const pause = (seconds: number) => {
     // it's a no-op

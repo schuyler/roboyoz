@@ -11,13 +11,14 @@ export type ActionParams = { [_: string]: string };
 export type ActionResponse = {
   say: (message: string, values?: { [_: string]: string }) => void;
   gather: (
+    target: Action,
     args: GatherAttributes,
     message?: string,
     values?: ActionParams,
   ) => void;
   pause: (seconds: number) => void;
-  redirect: (path: string) => void;
-  record: (path: string, args?: RecordAttributes) => void;
+  redirect: (target: Action) => void;
+  record: (target: Action, args?: RecordAttributes) => void;
   render: (status?: number) => APIGatewayProxyResult;
 };
 
@@ -25,7 +26,7 @@ interface ActionContext {
   interview: Interview;
 }
 
-type Action = (
+export type Action = (
   funcs: ActionResponse,
   params: ActionParams,
   context: ActionContext,
@@ -51,9 +52,9 @@ const answer: Action = async ({ say, redirect, pause }, _, { interview }) => {
   say("greeting");
   if (!interview.answeredQuestions.length) {
     say("introduction");
-    redirect("request_topic");
+    redirect(request_topic);
   } else {
-    redirect("welcome_back");
+    redirect(welcome_back);
   }
 };
 
@@ -61,12 +62,9 @@ const welcome_back: Action = async ({ gather }, _, { interview }) => {
   // they probably didn't actually answer the last question
   interview.answeredQuestions.splice(-1);
   gather(
+    interview.selectedTopic ? topic_chosen : request_topic,
     {
-      action: interview.selectedTopic ? "topic_chosen" : "request_topic",
-      input: ["dtmf"],
-      numDigits: 1,
       timeout: 1,
-      actionOnEmptyResult: true,
     },
     "welcome_back",
   );
@@ -74,14 +72,12 @@ const welcome_back: Action = async ({ gather }, _, { interview }) => {
 
 const request_topic: Action = async ({ gather }) => {
   gather(
+    choose_topic,
     {
-      action: "choose_topic",
       input: ["dtmf", "speech"],
       speechModel: "phone_call",
       hints: "Schuyler, Besha",
-      numDigits: 1,
       speechTimeout: "2",
-      actionOnEmptyResult: true,
     },
     "request_topic",
   );
@@ -99,11 +95,11 @@ const choose_topic: Action = async (
   if (digits == "*") {
     // Oops, we want to hear the intro again.
     say("introduction");
-    redirect(interview.selectedTopic ? "topic_chosen" : "request_topic");
+    redirect(interview.selectedTopic ? topic_chosen : request_topic);
     return;
   }
   if (digits == "0") {
-    redirect("request_topic");
+    redirect(request_topic);
     return;
   }
   if (digits == "2" || result[0] == "s") {
@@ -113,11 +109,11 @@ const choose_topic: Action = async (
   }
   if (!name) {
     say("no_idea_who");
-    redirect("request_topic");
+    redirect(request_topic);
     return;
   }
   interview.selectedTopic = name;
-  redirect("topic_chosen");
+  redirect(topic_chosen);
 };
 
 const topic_chosen: Action = async ({ gather }, _, { interview }) => {
@@ -125,7 +121,7 @@ const topic_chosen: Action = async ({ gather }, _, { interview }) => {
     interview.selectedTopic == "Besha"
       ? ["Besha", "Schuyler"]
       : ["Schuyler", "Besha"];
-  gather({ action: "ask_question" }, "topic_chosen", { name, other });
+  gather(ask_question, {}, "topic_chosen", { name, other });
 };
 
 const ask_question: Action = async (
@@ -135,7 +131,7 @@ const ask_question: Action = async (
 ) => {
   const digits = params.Digits || "";
   if (digits == "0") {
-    redirect("request_topic");
+    redirect(request_topic);
     return;
   }
   if (digits == "*") {
@@ -153,11 +149,11 @@ const ask_question: Action = async (
   );
   console.log("Asking question: " + question);
   if (!question) {
-    redirect("finished");
+    redirect(finished);
     return;
   }
   say(question, { literal: "yes" });
-  record("answer_question");
+  record(answer_question);
   interview.answeredQuestions.push(question);
 };
 
@@ -169,7 +165,7 @@ const answer_question: Action = async (
   const digits = params.Digits || "";
   const duration = parseInt(params.RecordingDuration || "0", 10);
   if (digits == "0") {
-    redirect("request_topic");
+    redirect(request_topic);
     interview.answeredQuestions.splice(-1);
     return;
   }
@@ -181,16 +177,15 @@ const answer_question: Action = async (
   if (digits == "*") {
     interview.answeredQuestions.splice(-2);
   }
-  redirect("ask_question");
+  redirect(ask_question);
 };
 
 const finished: Action = async ({ gather }, _, { interview }) => {
   const other = interview.selectedTopic == "Besha" ? "Schuyler" : "Besha";
   gather(
+    goodbye,
     {
       action: "goodbye",
-      input: ["dtmf"],
-      numDigits: 1,
       timeout: 3,
     },
     "no_more_questions",
@@ -202,13 +197,13 @@ const start_over: Action = async ({ redirect }, _, { interview }) => {
   // Truncate the list of questions answered, but don't ask them to re-record the intro.
   interview.answeredQuestions.length = 1;
   interview.selectedTopic = "";
-  redirect("request_topic");
+  redirect(request_topic);
 };
 
 const goodbye: Action = async ({ say, redirect, pause }, params) => {
   // If they hit star to get here, they actually want to start over.
   if (params.Digits?.includes("*")) {
-    redirect("start_over");
+    redirect(start_over);
   }
   say("goodbye");
   pause(2);
