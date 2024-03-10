@@ -51,7 +51,7 @@ const answer: Action = async ({ say, redirect, pause }, _, { interview }) => {
   say("greeting");
   if (!interview.answeredQuestions.length) {
     say("introduction");
-    redirect("request_subject");
+    redirect("request_topic");
   } else {
     redirect("welcome_back");
   }
@@ -62,7 +62,7 @@ const welcome_back: Action = async ({ gather }, _, { interview }) => {
   interview.answeredQuestions.splice(-1);
   gather(
     {
-      action: interview.selectedTopic ? "subject_chosen" : "request_subject",
+      action: interview.selectedTopic ? "topic_chosen" : "request_topic",
       input: ["dtmf"],
       numDigits: 1,
       timeout: 1,
@@ -72,10 +72,10 @@ const welcome_back: Action = async ({ gather }, _, { interview }) => {
   );
 };
 
-const request_subject: Action = async ({ gather }) => {
+const request_topic: Action = async ({ gather }) => {
   gather(
     {
-      action: "choose_subject",
+      action: "choose_topic",
       input: ["dtmf", "speech"],
       speechModel: "phone_call",
       hints: "Schuyler, Besha",
@@ -83,11 +83,11 @@ const request_subject: Action = async ({ gather }) => {
       speechTimeout: "2",
       actionOnEmptyResult: true,
     },
-    "request_subject",
+    "request_topic",
   );
 };
 
-const choose_subject: Action = async (
+const choose_topic: Action = async (
   { say, redirect },
   params,
   { interview },
@@ -99,11 +99,11 @@ const choose_subject: Action = async (
   if (digits == "*") {
     // Oops, we want to hear the intro again.
     say("introduction");
-    redirect(interview.selectedTopic ? "subject_chosen" : "request_subject");
+    redirect(interview.selectedTopic ? "topic_chosen" : "request_topic");
     return;
   }
   if (digits == "0") {
-    redirect("request_subject");
+    redirect("request_topic");
     return;
   }
   if (digits == "2" || result[0] == "s") {
@@ -113,19 +113,19 @@ const choose_subject: Action = async (
   }
   if (!name) {
     say("no_idea_who");
-    redirect("request_subject");
+    redirect("request_topic");
     return;
   }
   interview.selectedTopic = name;
-  redirect("subject_chosen");
+  redirect("topic_chosen");
 };
 
-const subject_chosen: Action = async ({ gather }, _, { interview }) => {
+const topic_chosen: Action = async ({ gather }, _, { interview }) => {
   const [name, other] =
     interview.selectedTopic == "Besha"
       ? ["Besha", "Schuyler"]
       : ["Schuyler", "Besha"];
-  gather({ action: "ask_question" }, "subject_chosen", { name, other });
+  gather({ action: "ask_question" }, "topic_chosen", { name, other });
 };
 
 const ask_question: Action = async (
@@ -135,7 +135,7 @@ const ask_question: Action = async (
 ) => {
   const digits = params.Digits || "";
   if (digits == "0") {
-    redirect("request_subject");
+    redirect("request_topic");
     return;
   }
   if (digits == "*") {
@@ -169,7 +169,7 @@ const answer_question: Action = async (
   const digits = params.Digits || "";
   const duration = parseInt(params.RecordingDuration || "0", 10);
   if (digits == "0") {
-    redirect("request_subject");
+    redirect("request_topic");
     interview.answeredQuestions.splice(-1);
     return;
   }
@@ -202,7 +202,7 @@ const start_over: Action = async ({ redirect }, _, { interview }) => {
   // Truncate the list of questions answered, but don't ask them to re-record the intro.
   interview.answeredQuestions.length = 1;
   interview.selectedTopic = "";
-  redirect("request_subject");
+  redirect("request_topic");
 };
 
 const goodbye: Action = async ({ say, redirect, pause }, params) => {
@@ -218,9 +218,9 @@ export const actions: Record<string, Action> = {
   answer,
   welcome_back,
   save_recording,
-  request_subject,
-  choose_subject,
-  subject_chosen,
+  request_topic,
+  choose_topic,
+  topic_chosen,
   ask_question,
   answer_question,
   finished,
