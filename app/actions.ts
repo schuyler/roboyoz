@@ -65,7 +65,7 @@ const welcome_back: Action = async ({ gather }, _, { interview }) => {
       action: interview.selectedTopic ? "subject_chosen" : "request_subject",
       input: ["dtmf"],
       numDigits: 1,
-      timeout: 2,
+      timeout: 1,
       actionOnEmptyResult: true,
     },
     "welcome_back",
@@ -99,11 +99,17 @@ const choose_subject: Action = async (
   if (digits == "*") {
     // Oops, we want to hear the intro again.
     say("introduction");
+    redirect(interview.selectedTopic ? "subject_chosen" : "request_subject");
+    return;
+  }
+  if (digits == "0") {
     redirect("request_subject");
-  } else if (digits == "1" || "bvptdf".includes(result[0])) {
-    name = "Besha";
-  } else if (digits == "2" || result[0] == "s") {
+    return;
+  }
+  if (digits == "2" || result[0] == "s") {
     name = "Schuyler";
+  } else if (digits == "1" || result) {
+    name = "Besha";
   }
   if (!name) {
     say("no_idea_who");
@@ -114,13 +120,12 @@ const choose_subject: Action = async (
   redirect("subject_chosen");
 };
 
-const subject_chosen: Action = async ({ say, redirect }, _, { interview }) => {
+const subject_chosen: Action = async ({ gather }, _, { interview }) => {
   const [name, other] =
     interview.selectedTopic == "Besha"
       ? ["Besha", "Schuyler"]
       : ["Schuyler", "Besha"];
-  say("subject_chosen", { name, other });
-  redirect("ask_question");
+  gather({ action: "ask_question" }, "subject_chosen", { name, other });
 };
 
 const ask_question: Action = async (
@@ -128,7 +133,12 @@ const ask_question: Action = async (
   params,
   { interview },
 ) => {
-  if (params.Digits == "*") {
+  const digits = params.Digits || "";
+  if (digits == "0") {
+    redirect("request_subject");
+    return;
+  }
+  if (digits == "*") {
     // Let's hear the intro again
     say("introduction");
   }
@@ -156,20 +166,22 @@ const answer_question: Action = async (
   params,
   { interview },
 ) => {
+  const digits = params.Digits || "";
   const duration = parseInt(params.RecordingDuration || "0", 10);
+  if (digits == "0") {
+    redirect("request_subject");
+    interview.answeredQuestions.splice(-1);
+    return;
+  }
   if (duration > 5) {
     say("interstitial");
   } else if (duration > 0) {
     say("skip");
   }
-  if (params.Digits?.includes("*")) {
+  if (digits == "*") {
     interview.answeredQuestions.splice(-2);
   }
-  if (params.Digits?.includes("0")) {
-    redirect("request_subject");
-  } else {
-    redirect("ask_question");
-  }
+  redirect("ask_question");
 };
 
 const finished: Action = async ({ gather }, _, { interview }) => {

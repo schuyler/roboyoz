@@ -19,7 +19,11 @@ export const createVoiceResponse = (): ActionResponse => {
     message: string = "",
     values: { [_: string]: string } = {},
   ) => {
-    const gatherResponse = response.gather(args);
+    const gatherResponse = response.gather({
+      numDigits: 1,
+      actionOnEmptyResult: true,
+      ...args,
+    });
     if (message) {
       gatherResponse.say(voiceArgs, getMessage(message, values));
     }

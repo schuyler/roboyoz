@@ -12,8 +12,7 @@ const messages: Record<string, string | string[]> = {
     "I see you've called before. Welcome back. If you want to hear the intro again, press star now.",
   request_subject:
     "Who would you like to be interviewed about? For Besha, press 1. For Schuyler, press 2.",
-  no_idea_who:
-    "Sorry, I have no idea who that is. Let's try again. For Besha, press 1. For Schuyler, press 2.",
+  no_idea_who: "Sorry, I have no idea who that is. Let's try again.",
   subject_chosen:
     "Let's chat about ${name}. At any time, you can press zero to talk about ${other} instead. " +
     "Whenever you're ready to move on to the next question, press pound. To go back to the previous question, press star.",
