@@ -11,16 +11,18 @@ const messages: Record<string, string | string[]> = {
   welcome_back:
     "I see you've called before. Welcome back. If you want to hear the intro again, press star now.",
   request_subject:
-    "Would you prefer to be asked questions about Besha or Schuyler?",
+    "Who would you like to be interviewed about? For Besha, press 1. For Schuyler, press 2.",
   no_idea_who:
     "Sorry, I have no idea who that is. Let's try again. For Besha, press 1. For Schuyler, press 2.",
   subject_chosen:
-    "Let's chat about ${name}. At any time, you can move on to the next question by pressing pound. To go back to the previous question, press star.",
+    "Let's chat about ${name}. At any time, you can press zero to talk about ${other} instead. " +
+    "Whenever you're ready to move on to the next question, press pound. To go back to the previous question, press star.",
   besha_questions: [
     "First off, would you please introduce yourself to our listeners, and say a few words about who you are?",
     "How do you know Besha?",
     "Tell us your favorite story about Besha. It could be something funny, heartwarming, or, ideally, a little embarrassing.",
     "What's Besha's favorite color?",
+    "How do Besha and Schuyler know each other? Wrong answers only.",
     "What's one thing you that you think Schuyler should know about Besha?",
     "What are Besha's favorite hobbies?",
     "Do you have any advice for the soon-to-be newlyweds?",
@@ -31,6 +33,7 @@ const messages: Record<string, string | string[]> = {
     "How do you know Schuyler?",
     "Tell us your favorite story about Schuyler. It could be something charming, humorous, or, ideally, a little embarrassing.",
     "What's Schuyler's favorite food?",
+    "How do Besha and Schuyler know each other? Wrong answers only.",
     "What's one thing you that you think Besha ought to know about Schuyler?",
     "What are Schuyler's favorite hobbies?",
     "Do you have any advice for the soon-to-be newlyweds?",

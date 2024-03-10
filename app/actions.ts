@@ -47,16 +47,29 @@ const save_recording: Action = async (_, params, { interview }) => {
 };
 
 const answer: Action = async ({ say, redirect, pause }, _, { interview }) => {
-  pause(1);
+  pause(2);
   say("greeting");
   if (!interview.answeredQuestions.length) {
     say("introduction");
+    redirect("request_subject");
   } else {
-    say("welcome_back");
-    // they probably didn't actually answer the last question
-    interview.answeredQuestions.splice(-1);
+    redirect("welcome_back");
   }
-  redirect("request_subject");
+};
+
+const welcome_back: Action = async ({ gather }, _, { interview }) => {
+  // they probably didn't actually answer the last question
+  interview.answeredQuestions.splice(-1);
+  gather(
+    {
+      action: interview.selectedTopic ? "subject_chosen" : "request_subject",
+      input: ["dtmf"],
+      numDigits: 1,
+      timeout: 2,
+      actionOnEmptyResult: true,
+    },
+    "welcome_back",
+  );
 };
 
 const request_subject: Action = async ({ gather }) => {
@@ -98,7 +111,15 @@ const choose_subject: Action = async (
     return;
   }
   interview.selectedTopic = name;
-  say("subject_chosen", { name });
+  redirect("subject_chosen");
+};
+
+const subject_chosen: Action = async ({ say, redirect }, _, { interview }) => {
+  const [name, other] =
+    interview.selectedTopic == "Besha"
+      ? ["Besha", "Schuyler"]
+      : ["Schuyler", "Besha"];
+  say("subject_chosen", { name, other });
   redirect("ask_question");
 };
 
@@ -107,18 +128,13 @@ const ask_question: Action = async (
   params,
   { interview },
 ) => {
+  if (params.Digits == "*") {
+    // Let's hear the intro again
+    say("introduction");
+  }
   const topic = interview.selectedTopic;
   if (!topic) {
     throw new Error("Interview is missing a topic");
-  }
-  const duration = parseInt(params.RecordingDuration || "0", 10);
-  if (duration > 5) {
-    say("interstitial");
-  } else if (duration > 0) {
-    say("skip");
-  }
-  if (params.Digits?.includes("*")) {
-    interview.answeredQuestions.splice(-2);
   }
   const question = getMessage(
     topic.toLowerCase() + "_questions",
@@ -131,8 +147,29 @@ const ask_question: Action = async (
     return;
   }
   say(question, { literal: "yes" });
-  record("ask_question");
+  record("answer_question");
   interview.answeredQuestions.push(question);
+};
+
+const answer_question: Action = async (
+  { say, redirect },
+  params,
+  { interview },
+) => {
+  const duration = parseInt(params.RecordingDuration || "0", 10);
+  if (duration > 5) {
+    say("interstitial");
+  } else if (duration > 0) {
+    say("skip");
+  }
+  if (params.Digits?.includes("*")) {
+    interview.answeredQuestions.splice(-2);
+  }
+  if (params.Digits?.includes("0")) {
+    redirect("request_subject");
+  } else {
+    redirect("ask_question");
+  }
 };
 
 const finished: Action = async ({ gather }, _, { interview }) => {
@@ -167,10 +204,13 @@ const goodbye: Action = async ({ say, redirect, pause }, params) => {
 
 export const actions: Record<string, Action> = {
   answer,
+  welcome_back,
   save_recording,
   request_subject,
   choose_subject,
+  subject_chosen,
   ask_question,
+  answer_question,
   finished,
   start_over,
   goodbye,
