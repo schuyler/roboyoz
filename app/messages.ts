@@ -9,7 +9,7 @@ const messages: Record<string, string | string[]> = {
     "Please feel free to skip any questions you don't feel like answering. " +
     "If you hang up or get disconnected, you can call back at any time and pick up where you left off.",
   welcome_back:
-    "I see you've called before. Welcome back. Let's pick up where we left off. If you want to hear the intro again, press star now.",
+    "I see you've called before. Welcome back. If you want to hear the intro again, press star now.",
   request_subject:
     "Would you prefer to be asked questions about Besha or Schuyler?",
   no_idea_who:
@@ -22,15 +22,17 @@ const messages: Record<string, string | string[]> = {
     "Tell us your favorite story about Besha. It could be something funny, heartwarming, or, ideally, a little embarrassing.",
     "What's Besha's favorite color?",
     "What's one thing you that you think Schuyler should know about Besha?",
+    "What are Besha's favorite hobbies?",
     "Do you have any advice for the soon-to-be newlyweds?",
     "Is there anything else you'd like to share with Besha and Schuyler, or their friends and family?",
   ],
   schuyler_questions: [
     "First off, would you please introduce yourself to our listeners, and say a few words about who you are?",
     "How do you know Schuyler?",
-    "Tell us your favorite story about Schuyler. It could be something charming, humorous, or, ideally, a little embarrassing. Or, as we call it in England, 'taking the piss'.",
+    "Tell us your favorite story about Schuyler. It could be something charming, humorous, or, ideally, a little embarrassing.",
     "What's Schuyler's favorite food?",
     "What's one thing you that you think Besha ought to know about Schuyler?",
+    "What are Schuyler's favorite hobbies?",
     "Do you have any advice for the soon-to-be newlyweds?",
     "Is there anything else you'd like to share with Besha and Schuyler, or their friends and family?",
   ],

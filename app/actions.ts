@@ -53,6 +53,8 @@ const answer: Action = async ({ say, redirect, pause }, _, { interview }) => {
     say("introduction");
   } else {
     say("welcome_back");
+    // they probably didn't actually answer the last question
+    interview.answeredQuestions.splice(-1);
   }
   redirect("request_subject");
 };
