@@ -70,7 +70,11 @@ const welcome_back: Action = async ({ gather }, _, { interview }) => {
   );
 };
 
-const request_topic: Action = async ({ gather }) => {
+const request_topic: Action = async ({ gather, say }, params) => {
+  const digits = params.Digits || "";
+  if (digits == "*") {
+    say("introduction");
+  }
   gather(
     choose_topic,
     {
@@ -116,11 +120,15 @@ const choose_topic: Action = async (
   redirect(topic_chosen);
 };
 
-const topic_chosen: Action = async ({ gather }, _, { interview }) => {
+const topic_chosen: Action = async ({ gather, say }, params, { interview }) => {
   const [name, other] =
     interview.selectedTopic == "Besha"
       ? ["Besha", "Schuyler"]
       : ["Schuyler", "Besha"];
+  const digits = params.Digits || "";
+  if (digits == "*") {
+    say("introduction");
+  }
   gather(ask_question, {}, "topic_chosen", { name, other });
 };
 
