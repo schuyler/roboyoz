@@ -6,6 +6,8 @@ import { sendErrorToSNS } from "./error";
 import { getCallerName } from "./caller_id";
 import { createWebResponse } from "./web";
 import { saveCall, loadCall } from "./call";
+import * as token from "./token";
+import * as asset from "./asset";
 
 const handler = async (
   event: APIGatewayProxyEvent,
@@ -81,3 +83,6 @@ export const voiceHandler = async (
   const response = createVoiceResponse();
   return handler(event, params, response);
 };
+
+export const tokenHandler = token.handler,
+  assetHandler = asset.handler;

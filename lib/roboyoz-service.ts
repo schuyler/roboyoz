@@ -11,7 +11,6 @@ import * as interview from "../app/interview";
 import * as call from "../app/call";
 import settings from "./settings.json";
 import { EmailSubscription } from "aws-cdk-lib/aws-sns-subscriptions";
-// import * as s3 from "aws-cdk-lib/aws-s3";
 
 export default class RoboYozService extends Construct {
   constructor(scope: Construct, id: string) {
@@ -38,6 +37,13 @@ export default class RoboYozService extends Construct {
     // Create an S3 bucket to store recordings
     const bucket = new s3.Bucket(this, "roboyoz-bucket", {
       bucketName: "roboyoz",
+    });
+
+    // Configure the bucket CORS policy to allow connections from anywhere.
+    bucket.addCorsRule({
+      allowedOrigins: ["*"],
+      allowedMethods: [s3.HttpMethods.GET, s3.HttpMethods.POST],
+      allowedHeaders: ["*"],
     });
 
     // Create an IAM user for Twilio to use when uploading recordings
@@ -68,6 +74,50 @@ export default class RoboYozService extends Construct {
         ...settings,
       },
     };
+
+    // Policy statement to grant CloudWatch Logs permissions to Lambda functions
+    const cloudwatchLogs = new iam.PolicyStatement({
+      actions: [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents",
+      ],
+      resources: ["arn:aws:logs:*:*:*"],
+    });
+
+    // Create a REST API with Lambda integrations
+    const api = new apigateway.RestApi(this, "roboyoz-api", {
+      restApiName: "RoboYoz",
+      description: "It's not actually Yoz. Except maybe it is.",
+    });
+
+    // Add the token handler to the API gateway
+    const tokenHandler = new lambda.Function(this, "tokenHandler", {
+      ...lambdaConfig,
+      handler: "handler.tokenHandler",
+    });
+    tokenHandler.addToRolePolicy(cloudwatchLogs);
+    const tokenResource = api.root.addResource("token");
+    const tokenIntegration = new apigateway.LambdaIntegration(tokenHandler);
+    tokenResource.addMethod("GET", tokenIntegration);
+
+    // Add the assets handler to the API gateway
+    const assetHandler = new lambda.Function(this, "assetHandler", {
+      ...lambdaConfig,
+      handler: "handler.assetHandler",
+    });
+    const assetIntegration = new apigateway.LambdaIntegration(assetHandler);
+    /* Create a reosurce underneath the api root that matches anything under asset/ */
+    const assetResource = api.root
+      .addResource("asset")
+      .addResource("{object+}");
+    // Add a GET method to the asset resource
+    assetResource.addMethod("GET", assetIntegration);
+    // Grant read-only S3 permissions to the Lambda function
+    bucket.grantRead(assetHandler);
+    // Grant CloudWatch Logs permissions to the Lambda function
+    assetHandler.addToRolePolicy(cloudwatchLogs);
+
     // Create a Lambda function for voice requests
     const voiceHandler = new lambda.Function(this, "voiceHandler", {
       ...lambdaConfig,
@@ -79,13 +129,7 @@ export default class RoboYozService extends Construct {
       handler: "handler.webHandler",
     });
 
-    // Create a REST API with Lambda integrations
-    const api = new apigateway.RestApi(this, "roboyoz-api", {
-      restApiName: "RoboYoz",
-      description: "It's not actually Yoz. Except maybe it is.",
-    });
-
-    // For each Lambda function, grant permissions and create API resources
+    // For each application Lambda, grant permissions and create API resources
     const lambdaFunctions: [string, lambda.Function][] = [
       ["voice", voiceHandler],
       ["web", webHandler],
@@ -100,17 +144,7 @@ export default class RoboYozService extends Construct {
       // Grant SNS permissions to the Lambda function
       errorTopic.grantPublish(handler);
       // Grant CloudWatch Logs permissions to the Lambda function
-      handler.addToRolePolicy(
-        new iam.PolicyStatement({
-          actions: [
-            "logs:CreateLogGroup",
-            "logs:CreateLogStream",
-            "logs:PutLogEvents",
-          ],
-          resources: ["arn:aws:logs:*:*:*"],
-        }),
-      );
-
+      handler.addToRolePolicy(cloudwatchLogs);
       // Create a resource at the root of the API for the Lambda function
       const resource = api.root.addResource(path);
       const integration = new apigateway.LambdaIntegration(handler);
