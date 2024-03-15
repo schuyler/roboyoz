@@ -1,16 +1,19 @@
 import { Construct } from "constructs";
+import * as cdk from "aws-cdk-lib";
 import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as sns from "aws-cdk-lib/aws-sns";
+import * as cloudfront from "aws-cdk-lib/aws-cloudfront";
+import { EmailSubscription } from "aws-cdk-lib/aws-sns-subscriptions";
 
 import { actions } from "../app/actions";
 import * as interview from "../app/interview";
 import * as call from "../app/call";
 import settings from "./settings.json";
-import { EmailSubscription } from "aws-cdk-lib/aws-sns-subscriptions";
+import { Certificate } from "aws-cdk-lib/aws-certificatemanager";
 
 export default class RoboYozService extends Construct {
   constructor(scope: Construct, id: string) {
@@ -156,5 +159,40 @@ export default class RoboYozService extends Construct {
         actionResource.addMethod("POST", integration);
       });
     }
+
+    const region = cdk.Stack.of(this).region;
+    const certificate = Certificate.fromCertificateArn(
+      this,
+      "ssl_cert",
+      settings.CERTIFICATE_ARN,
+    );
+    new cloudfront.CloudFrontWebDistribution(this, "distribution", {
+      originConfigs: [
+        {
+          customOriginSource: {
+            domainName:
+              api.restApiId + ".execute-api." + region + ".amazonaws.com",
+            originPath: "/prod",
+          },
+          behaviors: [
+            {
+              isDefaultBehavior: true,
+              forwardedValues: {
+                queryString: true,
+              },
+              defaultTtl: cdk.Duration.seconds(0),
+              viewerProtocolPolicy:
+                cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+            },
+          ],
+        },
+      ],
+      viewerCertificate: cloudfront.ViewerCertificate.fromAcmCertificate(
+        certificate,
+        {
+          aliases: [settings.DOMAIN],
+        },
+      ),
+    });
   }
 }
