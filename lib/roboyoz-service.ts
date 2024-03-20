@@ -92,6 +92,7 @@ export default class RoboYozService extends Construct {
     const api = new apigateway.RestApi(this, "roboyoz-api", {
       restApiName: "RoboYoz",
       description: "It's not actually Yoz. Except maybe it is.",
+      binaryMediaTypes: ["image/*", "audio/*"],
     });
 
     // Add the token handler to the API gateway
@@ -104,22 +105,60 @@ export default class RoboYozService extends Construct {
     const tokenIntegration = new apigateway.LambdaIntegration(tokenHandler);
     tokenResource.addMethod("GET", tokenIntegration);
 
-    // Add the assets handler to the API gateway
-    const assetHandler = new lambda.Function(this, "assetHandler", {
-      ...lambdaConfig,
-      handler: "handler.assetHandler",
+    /* Create a role that grants read-only access to the bucket */
+    const s3AssetRole = new iam.Role(this, "s3AssetRole", {
+      assumedBy: new iam.ServicePrincipal("apigateway.amazonaws.com"),
     });
-    const assetIntegration = new apigateway.LambdaIntegration(assetHandler);
-    /* Create a reosurce underneath the api root that matches anything under asset/ */
-    const assetResource = api.root
-      .addResource("asset")
-      .addResource("{object+}");
-    // Add a GET method to the asset resource
-    assetResource.addMethod("GET", assetIntegration);
-    // Grant read-only S3 permissions to the Lambda function
-    bucket.grantRead(assetHandler);
-    // Grant CloudWatch Logs permissions to the Lambda function
-    assetHandler.addToRolePolicy(cloudwatchLogs);
+    /* Grant read-only S3 permissions to the role */
+    bucket.grantRead(s3AssetRole);
+    /* Create an AWS integration for the S3 bucket. Astonishingly, this was the only lucid example
+      I could readily find on the Internet:
+      https://aws.plainenglish.io/integrating-aws-api-gateway-and-aws-s3-using-aws-cdk-41118c1b01c3
+    */
+
+    const s3Integration = new apigateway.AwsIntegration({
+      service: "s3",
+      integrationHttpMethod: "GET",
+      // path: `${bucket.bucketName}/{folder}/{key}`,
+      path: `${bucket.bucketName}/assets/{key}`,
+      options: {
+        credentialsRole: s3AssetRole,
+        integrationResponses: [
+          {
+            statusCode: "200",
+            responseParameters: {
+              "method.response.header.Content-Type":
+                "integration.response.header.Content-Type",
+            },
+          },
+        ],
+
+        requestParameters: {
+          // "integration.request.path.folder": "method.request.path.folder",
+          "integration.request.path.key": "method.request.path.key",
+        },
+      },
+    });
+    /* Create a reosurce underneath the api root that matches anything under s3/ */
+    const s3AssetResource = api.root
+      .addResource("assets")
+      //.addResource("{folder}")
+      .addResource("{key}");
+    s3AssetResource.addMethod("GET", s3Integration, {
+      methodResponses: [
+        {
+          statusCode: "200",
+          responseParameters: {
+            "method.response.header.Content-Type": true,
+          },
+        },
+      ],
+      requestParameters: {
+        //"method.request.path.folder": true,
+        "method.request.path.key": true,
+        "method.request.header.Content-Type": true,
+      },
+    });
 
     // Create a Lambda function for voice requests
     const voiceHandler = new lambda.Function(this, "voiceHandler", {
@@ -160,17 +199,26 @@ export default class RoboYozService extends Construct {
       });
     }
 
-    const region = cdk.Stack.of(this).region;
+    /*
+    Things I had to do manually:
+    - Create the hosted zone in Route 53
+    - Point the domain nameserver with the registrar at Route 53
+    - Create a certificate in ACM _in us-east-1_ (it won't work in other regions!)
+    - Create the interview subdomain in Route 53 and alias it to the CloudFront distribution <- this could probably be dobne in CDK
+    */
     const certificate = Certificate.fromCertificateArn(
       this,
       "ssl_cert",
       settings.CERTIFICATE_ARN,
     );
+    const region = cdk.Stack.of(this).region;
     new cloudfront.CloudFrontWebDistribution(this, "distribution", {
+      defaultRootObject: "/assets/index.html",
       originConfigs: [
         {
           customOriginSource: {
             domainName:
+              // There must be a better way to get this domain name from the API Gateway construct
               api.restApiId + ".execute-api." + region + ".amazonaws.com",
             originPath: "/prod",
           },
