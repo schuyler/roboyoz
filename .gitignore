@@ -1,8 +1,12 @@
+# JavaScripty stuff
 *.js
 !jest.config.js
 *.d.ts
 node_modules
 dist
+
+# Local config stuff
+.envrc
 lib/settings.json
 
 # CDK asset staging directory
