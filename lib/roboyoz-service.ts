@@ -204,7 +204,8 @@ export default class RoboYozService extends Construct {
     - Create the hosted zone in Route 53
     - Point the domain nameserver with the registrar at Route 53
     - Create a certificate in ACM _in us-east-1_ (it won't work in other regions!)
-    - Create the interview subdomain in Route 53 and alias it to the CloudFront distribution <- this could probably be dobne in CDK
+    - Create the interview subdomain in Route 53 and alias it to the CloudFront distribution
+      * this could be done in CDK if I wanted to specify the environment blah blah
     */
     const certificate = Certificate.fromCertificateArn(
       this,
@@ -212,35 +213,46 @@ export default class RoboYozService extends Construct {
       settings.CERTIFICATE_ARN,
     );
     const region = cdk.Stack.of(this).region;
-    new cloudfront.CloudFrontWebDistribution(this, "distribution", {
-      defaultRootObject: "/assets/index.html",
-      originConfigs: [
-        {
-          customOriginSource: {
-            domainName:
-              // There must be a better way to get this domain name from the API Gateway construct
-              api.restApiId + ".execute-api." + region + ".amazonaws.com",
-            originPath: "/prod",
-          },
-          behaviors: [
-            {
-              isDefaultBehavior: true,
-              forwardedValues: {
-                queryString: true,
-              },
-              defaultTtl: cdk.Duration.seconds(0),
-              viewerProtocolPolicy:
-                cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+    const distribution = new cloudfront.CloudFrontWebDistribution(
+      this,
+      "distribution",
+      {
+        defaultRootObject: "/assets/index.html",
+        originConfigs: [
+          {
+            customOriginSource: {
+              domainName:
+                // There must be a better way to get this domain name from the API Gateway construct
+                api.restApiId + ".execute-api." + region + ".amazonaws.com",
+              originPath: "/prod",
             },
-          ],
-        },
-      ],
-      viewerCertificate: cloudfront.ViewerCertificate.fromAcmCertificate(
-        certificate,
-        {
-          aliases: [settings.DOMAIN],
-        },
-      ),
+            behaviors: [
+              {
+                isDefaultBehavior: true,
+                forwardedValues: {
+                  queryString: true,
+                },
+                // allow POST requests
+                allowedMethods: cloudfront.CloudFrontAllowedMethods.ALL,
+                defaultTtl: cdk.Duration.seconds(0),
+                viewerProtocolPolicy:
+                  cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+              },
+            ],
+          },
+        ],
+        viewerCertificate: cloudfront.ViewerCertificate.fromAcmCertificate(
+          certificate,
+          {
+            aliases: [settings.DOMAIN],
+          },
+        ),
+      },
+    );
+
+    // Emit the domain name of the distribution as a cfn output
+    new cdk.CfnOutput(this, "distributionDomainName", {
+      value: distribution.distributionDomainName,
     });
   }
 }
