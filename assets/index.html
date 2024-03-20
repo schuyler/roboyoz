@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link
+            rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=EB+Garamond&display=swap"
+        />
+        <title>Erle-Grey Wedding Voice Messages</title>
+        <style>
+            @font-face {
+                font-family: "EB Garamond";
+                src:
+                    url("path/to/eb-garamond-regular.woff2") format("woff2"),
+                    url("path/to/eb-garamond-regular.woff") format("woff");
+                font-weight: normal;
+                font-style: normal;
+            }
+            #recordingIndicator {
+                font-size: 1.5em;
+                font-weight: bold;
+                position: relative;
+                margin-left: 0.5em;
+            }
+            button {
+                width: 10em;
+                font-size: 1em;
+                font-weight: bold;
+                font-family: "EB Garamond", serif;
+                margin-bottom: 0.25em;
+                color: white;
+                background-color: black;
+            }
+            input[type="text"] {
+                font-size: 1em;
+            }
+            #container {
+                color: white;
+                font-family: "EB Garamond", serif;
+                font-size: 2em;
+                text-align: center;
+                background-color: black;
+                border-radius: 1em;
+                padding: 1em;
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+            }
+            /* CSS for screens shorter than 600px */
+            @media (max-height: 599px) {
+                #container {
+                    font-size: 1.25em;
+                }
+            }
+            #content div {
+                margin-bottom: 1em;
+            }
+            #explain {
+                font-size: 0.8em;
+                position: relative;
+            }
+            body {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                margin: 0;
+                margin: 0;
+                padding: 0;
+                background-image: url("assets/background.jpeg");
+                background-size: cover;
+                background-position: center;
+                background-repeat: no-repeat;
+            }
+            h1 {
+                font-size: 1.5em;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="container">
+            <div id="content">
+                <h1>Erle-Grey Wedding Interview Hotline</h1>
+                <h2>with your host, RoboYoz!</h2>
+                <div>
+                    <input
+                        type="text"
+                        name="name"
+                        placeholder="What's your name?"
+                    />
+                    <span>
+                        <button name="connect" disabled="1">Connect</button>
+                    </span>
+                </div>
+                <div>
+                    <button onclick="sendDigit('*')">Back (*)</button>
+                    <button onclick="sendDigit('1')">Besha</button>
+                    <button onclick="sendDigit('2')">Schuyler</button>
+                    <button onclick="sendDigit('#')">Next (#)</button>
+                </div>
+            </div>
+        </div>
+        <script src="assets/twilio.js"></script>
+    </body>
+</html>
