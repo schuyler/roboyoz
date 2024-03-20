@@ -64,10 +64,17 @@ const handler = async (
   }
 };
 
+const decodeEventBody = (event: APIGatewayProxyEvent) => {
+  return event.body && event.isBase64Encoded
+    ? Buffer.from(event.body, "base64").toString("utf-8")
+    : event.body;
+};
+
 export const webHandler = async (
   event: APIGatewayProxyEvent,
 ): Promise<APIGatewayProxyResult> => {
-  const params = JSON.parse(event.body || "{}");
+  const body = decodeEventBody(event);
+  const params = JSON.parse(body || "{}");
   const response = createWebResponse();
   return handler(event, params, response);
 };
@@ -75,7 +82,9 @@ export const webHandler = async (
 export const voiceHandler = async (
   event: APIGatewayProxyEvent,
 ): Promise<APIGatewayProxyResult> => {
-  const query = new URLSearchParams(event.body || "");
+  // decode event body is isBase64Encoded is set
+  const body = decodeEventBody(event);
+  const query = new URLSearchParams(body || "");
   const params: ActionParams = {};
   for (const [key, value] of query) {
     params[key] = value;
