@@ -9,36 +9,27 @@
         />
         <title>Erle-Grey Wedding Voice Messages</title>
         <style>
-            @font-face {
-                font-family: "EB Garamond";
-                src:
-                    url("path/to/eb-garamond-regular.woff2") format("woff2"),
-                    url("path/to/eb-garamond-regular.woff") format("woff");
-                font-weight: normal;
-                font-style: normal;
-            }
-            #recordingIndicator {
-                font-size: 1.5em;
-                font-weight: bold;
-                position: relative;
-                margin-left: 0.5em;
-            }
             button {
-                width: 10em;
+                width: 5em;
+                min-height: 2.5em;
                 font-size: 1em;
                 font-weight: bold;
                 font-family: "EB Garamond", serif;
                 margin-bottom: 0.25em;
-                color: white;
+                color: grey;
                 background-color: black;
             }
+            button[name="connect"] {
+                width: 15em;
+            }
             input[type="text"] {
+                width: 15em;
                 font-size: 1em;
             }
             #container {
                 color: white;
                 font-family: "EB Garamond", serif;
-                font-size: 2em;
+                font-size: 1.5em;
                 text-align: center;
                 background-color: black;
                 border-radius: 1em;
@@ -57,9 +48,9 @@
             #content div {
                 margin-bottom: 1em;
             }
-            #explain {
-                font-size: 0.8em;
-                position: relative;
+            #subtitle {
+                font-style: italic;
+                margin-bottom: 1em;
             }
             body {
                 display: flex;
@@ -83,22 +74,23 @@
         <div id="container">
             <div id="content">
                 <h1>Erle-Grey Wedding Interview Hotline</h1>
-                <h2>with your host, RoboYoz!</h2>
-                <div>
+                <div id="subtitle">with your host, RoboYoz!</div>
+                <div id="identify">
                     <input
                         type="text"
                         name="name"
                         placeholder="What's your name?"
                     />
-                    <span>
-                        <button name="connect" disabled="1">Connect</button>
-                    </span>
                 </div>
                 <div>
-                    <button onclick="sendDigit('*')">Back (*)</button>
-                    <button onclick="sendDigit('1')">Besha</button>
-                    <button onclick="sendDigit('2')">Schuyler</button>
-                    <button onclick="sendDigit('#')">Next (#)</button>
+                    <button name="connect" disabled="1">Connect</button>
+                </div>
+                <div id="interact">
+                    <button name="digit" disabled="1">⬅&nbsp;&nbsp;✻</button>
+                    <button name="digit" disabled="1">0</button>
+                    <button name="digit" disabled="1">1</button>
+                    <button name="digit" disabled="1">2</button>
+                    <button name="digit" disabled="1">#&nbsp&nbsp➡</button>
                 </div>
             </div>
         </div>

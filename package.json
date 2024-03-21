@@ -6,7 +6,7 @@
   },
   "scripts": {
     "build": "tsc && esbuild --bundle --outfile=dist/handler.js --platform=node app/index.ts && zip -9FSqj dist/bundle.zip dist/handler.js",
-    "build-client": "tsc && esbuild --bundle --outfile=assets/twilio.js --platform=browser client/twilio.ts",
+    "build-client": "tsc && esbuild --bundle --outfile=assets/twilio.js --platform=browser client/twilio.ts && && aws s3 sync assets s3://roboyoz/assets",
     "watch": "tsc -w",
     "test": "jest",
     "cdk": "cdk"
