@@ -61,8 +61,17 @@ function endCall() {
 // Set the connectButton text to "Connect" if there is no call, or "Disconnect" if there is a call
 export async function toggleCall() {
   if (call) {
+    // if there is a call, end it
     endCall();
   } else {
+    // Check to make sure we have rights to use the microphone
+    try {
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (error) {
+      alert("Please allow microphone access to talk to RoboYoz");
+      return;
+    }
+    // Start the call
     startCall();
   }
 }
@@ -76,7 +85,6 @@ function setConnectButton(label: string, enabled: boolean) {
 
 // Function to send a DTMF tone to the call
 export function sendDigit(digit: string) {
-  console.log(`Sending digit: ${digit} to ${call?.parameters.To}`);
   call?.sendDigits(digit);
 }
 
