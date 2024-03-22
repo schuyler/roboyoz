@@ -173,6 +173,7 @@ const answer_question: Action = async (
   const digits = params.Digits || "";
   const duration = parseInt(params.RecordingDuration || "0", 10);
   if (digits == "0") {
+    say("skip");
     redirect(request_topic);
     interview.answeredQuestions.splice(-1);
     return;
