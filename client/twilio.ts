@@ -59,21 +59,27 @@ function endCall() {
 
 // Toggle call state: if there is a call, end it; otherwise, start a call
 // Set the connectButton text to "Connect" if there is no call, or "Disconnect" if there is a call
-export async function toggleCall() {
+async function toggleCall() {
   if (call) {
     // if there is a call, end it
     endCall();
   } else {
-    // Check to make sure we have rights to use the microphone
-    try {
-      await navigator.mediaDevices.getUserMedia({ audio: true });
-    } catch (error) {
-      alert("Please allow microphone access to talk to RoboYoz");
-      return;
-    }
     // Start the call
-    startCall();
+    if (await checkMicAccess()) {
+      startCall();
+    }
   }
+}
+
+async function checkMicAccess() {
+  // Check to make sure we have rights to use the microphone
+  try {
+    await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch (error) {
+    alert("🎙️ Please allow microphone access to talk to RoboYoz! ❤️ 🎙️");
+    return false;
+  }
+  return true;
 }
 
 function setConnectButton(label: string, enabled: boolean) {
@@ -125,6 +131,7 @@ function addListeners() {
     const digit = button.textContent?.replace(/[^0-9*#]/g, "");
     button.addEventListener("click", () => digit && sendDigit(digit));
   });
+  checkMicAccess();
 }
 
 // Add event listeners when the DOM is fully loaded
