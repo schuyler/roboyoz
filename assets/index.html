@@ -24,13 +24,16 @@
                 color: grey;
                 background-color: black;
             }
+
             button[name="connect"] {
                 width: 15em;
             }
+
             input[type="text"] {
                 width: 15em;
                 font-size: 1em;
             }
+
             #container {
                 color: white;
                 font-family: "EB Garamond", serif;
@@ -44,19 +47,23 @@
                 left: 50%;
                 transform: translate(-50%, -50%);
             }
+
             /* CSS for screens shorter than 600px */
             @media (max-height: 599px) {
                 #container {
                     font-size: 1.25em;
                 }
             }
+
             #content div {
                 margin-bottom: 1em;
             }
+
             #subtitle {
                 font-style: italic;
                 margin-bottom: 1em;
             }
+
             body {
                 display: flex;
                 justify-content: center;
@@ -70,11 +77,13 @@
                 background-position: center;
                 background-repeat: no-repeat;
             }
+
             h1 {
                 font-size: 1.5em;
             }
         </style>
     </head>
+
     <body>
         <div id="container">
             <div id="content">
@@ -91,11 +100,15 @@
                     <button name="connect" disabled="1">Connect</button>
                 </div>
                 <div id="interact">
-                    <button name="digit" disabled="1">⬅&nbsp;&nbsp;✻</button>
+                    <button name="digit" disabled="1">
+                        &#x2b05;&#xfe0e;&nbsp;&nbsp;✻
+                    </button>
                     <button name="digit" disabled="1">0</button>
                     <button name="digit" disabled="1">1</button>
                     <button name="digit" disabled="1">2</button>
-                    <button name="digit" disabled="1">#&nbsp&nbsp➡</button>
+                    <button name="digit" disabled="1">
+                        #&nbsp;&nbsp;&#x2b95;&#xfe0e;
+                    </button>
                 </div>
             </div>
         </div>
