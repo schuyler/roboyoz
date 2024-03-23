@@ -1,7 +1,8 @@
 import { Device, Call } from "@twilio/voice-sdk";
 
 let device: Device,
-  call: Call | null = null;
+  call: Call | null = null,
+  status: "disconnected" | "connecting" | "connected" = "disconnected";
 const doc: Document = document;
 const tokenUrl = "https://interview.erlegrey.com/token";
 
@@ -10,7 +11,8 @@ const $ = (selector: string) => doc.querySelector(selector) as HTMLElement;
 
 async function loadToken(name: string): Promise<string> {
   // Download the access token from the tokenUrl using the fetch() API. Provide the identity as a query parameter.
-  const response = await fetch(tokenUrl + `?identity=${name}`);
+  const identity = encodeURIComponent(name);
+  const response = await fetch(tokenUrl + `?name=${identity}`);
   const blob = await response.text();
   const args = JSON.parse(blob);
   return args.token;
@@ -18,56 +20,72 @@ async function loadToken(name: string): Promise<string> {
 
 // Function to start a call
 async function startCall() {
-  const name = $("input[name=name]") as HTMLInputElement;
-  if (!name.value) {
-    throw new Error("Name is required");
+  if (status != "disconnected") {
+    return;
   }
-  const token = await loadToken(name.value);
-  device = new Device(token);
-  if (!device) {
-    throw new Error("Device not initialized");
+  status = "connecting";
+  console.log("Call status:", status);
+  try {
+    if (!(await checkMicAccess())) {
+      throw new Error("No microphone access");
+    }
+
+    const name = $("input[name=name]") as HTMLInputElement;
+    if (!name.value) {
+      throw new Error("Name is required");
+    }
+    const token = await loadToken(name.value);
+    device = new Device(token);
+    if (!device) {
+      throw new Error("Device not initialized");
+    }
+
+    // Set an event on the device to refresh the token when it expires
+    device.on("tokenAboutToExpire", async () => {
+      console.log("Refreshing token...");
+      device.updateToken(await loadToken(name.value));
+    });
+
+    setConnectButton("Connecting...", false);
+    call = await device.connect({});
+    // Set up event listeners for the call
+    call.on("disconnect", endCall);
+    call.on("error", endCall);
+    call.on("cancel", endCall);
+    call.on("reject", endCall);
+    // When the call is fully active, enable the number buttons
+    call.on("accept", () => {
+      status = "connected";
+      console.log("Call status:", status);
+      setConnectButton("Disconnect", true);
+      enableNumberButtons(true);
+    });
+  } catch (error: any) {
+    console.error("startCall error", error);
+    endCall();
   }
-
-  // Set an event on the device to refresh the token when it expires
-  device.on("tokenAboutToExpire", async () => {
-    console.log("Refreshing token...");
-    device.updateToken(await loadToken(name.value));
-  });
-
-  setConnectButton("Connecting...", false);
-  call = await device.connect({});
-  // Set up event listeners for the call
-  call.on("disconnect", endCall);
-  call.on("error", endCall);
-  call.on("cancel", endCall);
-  call.on("reject", endCall);
-  // When the call is fully active, enable the number buttons
-  call.on("accept", () => {
-    setConnectButton("Disconnect", true);
-    enableNumberButtons(true);
-  });
 }
 // Function to disconnect the call
 function endCall() {
+  if (status == "disconnected") {
+    return;
+  }
+  status = "disconnected";
+  console.log("Call status:", status);
   if (call && call.status() != "closed") {
     call.disconnect();
   }
   call = null;
-  setConnectButton("Connect", true);
+  enableConnectButton();
   enableNumberButtons(false);
 }
 
 // Toggle call state: if there is a call, end it; otherwise, start a call
-// Set the connectButton text to "Connect" if there is no call, or "Disconnect" if there is a call
 async function toggleCall() {
-  if (call) {
-    // if there is a call, end it
-    endCall();
+  if (status == "disconnected") {
+    startCall();
   } else {
-    // Start the call
-    if (await checkMicAccess()) {
-      startCall();
-    }
+    endCall();
   }
 }
 
@@ -82,9 +100,11 @@ async function checkMicAccess() {
   return true;
 }
 
-function setConnectButton(label: string, enabled: boolean) {
+function setConnectButton(label: string | null, enabled: boolean) {
   const connect = $("button[name=connect]") as HTMLButtonElement;
-  connect.textContent = label;
+  if (label) {
+    connect.textContent = label;
+  }
   connect.disabled = !enabled;
   connect.style.color = enabled ? "white" : "grey";
 }
@@ -97,17 +117,13 @@ export function sendDigit(digit: string) {
 // Enable connectButton if the name input has a non-empty value
 function enableConnectButton() {
   const name = $("input[name=name]") as HTMLInputElement;
-  const connect = $("button[name=connect]") as HTMLButtonElement;
-  const active = name.value || call;
-  connect.style.color = active ? "white" : "grey";
-  connect.disabled = !active;
+  if (status == "disconnected") {
+    setConnectButton("Connect", !!name.value);
+  }
 }
 
 // Enable all buttons and set their text color to white
 function enableNumberButtons(active: boolean) {
-  const connect = $("button[name=connect]") as HTMLButtonElement;
-  connect.textContent = "Disconnect";
-  connect.disabled = false;
   // select all buttons not named "connect
   const buttons = Array.from(
     doc.querySelectorAll("button:not([name=connect])"),

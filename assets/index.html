@@ -12,7 +12,7 @@
             rel="stylesheet"
             href="https://fonts.googleapis.com/css2?family=EB+Garamond&display=swap"
         />
-        <title>Erle-Grey Wedding Voice Messages</title>
+        <title>Erle-Grey Wedding Interview Hotline</title>
         <style>
             button {
                 width: 5em;
@@ -64,6 +64,21 @@
                 margin-bottom: 1em;
             }
 
+            #explain {
+                font-size: 0.75em;
+                margin-top: 1em;
+                margin-bottom: 1em;
+                width: 30em;
+                /* center the explain div in its parent */
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            #explain a {
+                color: white;
+                text-decoration: underline;
+            }
+
             body {
                 display: flex;
                 justify-content: center;
@@ -93,6 +108,7 @@
                     <input
                         type="text"
                         name="name"
+                        autocomplete="name"
                         placeholder="What's your name?"
                     />
                 </div>
@@ -109,6 +125,15 @@
                     <button name="digit" disabled="1">
                         #&nbsp;&nbsp;&#x2b95;&#xfe0e;
                     </button>
+                </div>
+                <div id="explain">
+                    Please enter your name and then click "Connect" to be
+                    interviewed by RoboYoz for the Erle-Grey Wedding Audio
+                    Extravaganza. You can also
+                    <a href="https://calendly.com/yozlet/erle-grey-interview"
+                        >schedule a live interview</a
+                    >
+                    with the real Yoz!
                 </div>
             </div>
         </div>

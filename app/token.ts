@@ -13,7 +13,8 @@ type TokenConfig = {
 };
 
 // Generate a new Twilio voice audio access token, given an identity
-export const generateToken = (identity: string, env: TokenConfig): string => {
+export const generateToken = (name: string, env: TokenConfig): string => {
+  const identity = name.replace(/[^a-zA-Z0-9]/g, "_");
   const token = new AccessToken(
     env.TWILIO_ACCOUNT_SID,
     env.TWILIO_API_KEY,
@@ -32,17 +33,17 @@ export const generateToken = (identity: string, env: TokenConfig): string => {
 export const handler = async (
   event: APIGatewayProxyEvent,
 ): Promise<APIGatewayProxyResult> => {
-  const identity = event.queryStringParameters?.identity;
-  if (!identity) {
+  const name = event.queryStringParameters?.name;
+  if (!name) {
     return {
       statusCode: 400,
-      body: JSON.stringify({ error: "identity is required" }),
+      body: JSON.stringify({ error: "name is required" }),
       headers: {
         "Content-Type": "application/json",
       },
     };
   }
-  const token = generateToken(identity, process.env as TokenConfig);
+  const token = generateToken(name, process.env as TokenConfig);
   return {
     statusCode: 200,
     body: JSON.stringify({ token }),
