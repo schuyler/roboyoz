@@ -6,7 +6,7 @@
         <link rel="icon" href="assets/favicon.ico" />
         <meta
             name="description"
-            content="Interview hotline for the Erle-Grey wedding celebration"
+            content="Record an interview for the Erle-Grey Wedding Audio Extravaganza!"
         />
         <link
             rel="stylesheet"
@@ -16,21 +16,27 @@
         <style>
             button {
                 width: 5em;
-                min-height: 2.5em;
+                min-height: 1.5em;
                 font-size: 1em;
                 font-weight: bold;
                 font-family: "EB Garamond", serif;
+                text-align: center;
                 margin-bottom: 0.25em;
                 color: grey;
                 background-color: black;
+                padding: 0; /* otherwise Safari iOS gets weird */
             }
 
             button[name="connect"] {
-                width: 15em;
+                width: 12em;
+            }
+
+            button span {
+                font-size: 0.75em;
             }
 
             input[type="text"] {
-                width: 15em;
+                width: 12em;
                 font-size: 1em;
             }
 
@@ -43,15 +49,43 @@
                 border-radius: 1em;
                 padding: 1em;
                 position: absolute;
+                /* make the container 50% of the height but 75% of width of the window and center it on the body */
+                width: 30em;
+                /*height: 50%;*/
                 top: 50%;
                 left: 50%;
                 transform: translate(-50%, -50%);
             }
 
-            /* CSS for screens shorter than 600px */
-            @media (max-height: 599px) {
+            #identify div {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                margin-bottom: 1em;
+            }
+
+            /* Make the font smaller for smaller screens */
+            @media (max-width: 768px) {
                 #container {
                     font-size: 1.25em;
+                    max-width: 75%;
+                }
+
+                #explain {
+                    font-size: 1em;
+                    width: 25em;
+                }
+            }
+
+            @media (max-width: 640px) {
+                #container {
+                    font-size: 0.9em;
+                    max-width: 75%;
+                }
+
+                #explain {
+                    font-size: 0.8em;
+                    max-width: 75%;
                 }
             }
 
@@ -65,7 +99,7 @@
             }
 
             #explain {
-                font-size: 0.75em;
+                font-size: 0.9em;
                 margin-top: 1em;
                 margin-bottom: 1em;
                 width: 30em;
@@ -91,6 +125,8 @@
                 background-size: cover;
                 background-position: center;
                 background-repeat: no-repeat;
+                /* crop the background image */
+                overflow: hidden;
             }
 
             h1 {
@@ -105,30 +141,42 @@
                 <h1>Erle-Grey Wedding Interview Hotline</h1>
                 <div id="subtitle">with your host, RoboYoz!</div>
                 <div id="identify">
-                    <input
-                        type="text"
-                        name="name"
-                        autocomplete="name"
-                        placeholder="What's your name?"
-                    />
-                </div>
-                <div>
-                    <button name="connect" disabled="1">Connect</button>
+                    <div>
+                        <input
+                            type="text"
+                            name="name"
+                            autocomplete="name"
+                            placeholder="What's your name?"
+                        />
+                    </div>
+                    <div>
+                        <button name="connect" disabled="1">Connect</button>
+                    </div>
                 </div>
                 <div id="interact">
                     <button name="digit" disabled="1">
-                        &#x2b05;&#xfe0e;&nbsp;&nbsp;✻
+                        <!-- &#x2b05;&#xfe0e;&nbsp;&nbsp; -->✻
+                        <br />
+                        <span>Back</span>
                     </button>
-                    <button name="digit" disabled="1">0</button>
-                    <button name="digit" disabled="1">1</button>
-                    <button name="digit" disabled="1">2</button>
                     <button name="digit" disabled="1">
-                        #&nbsp;&nbsp;&#x2b95;&#xfe0e;
+                        0<br /><span>Switch</span>
+                    </button>
+                    <button name="digit" disabled="1">
+                        1<br /><span>Besha</span>
+                    </button>
+                    <button name="digit" disabled="1">
+                        2<br /><span>Schuyler</span>
+                    </button>
+                    <button name="digit" disabled="1">
+                        #<!--&nbsp;&nbsp;&#x2b95;&#xfe0e;-->
+                        <br />
+                        <span>Next</span>
                     </button>
                 </div>
                 <div id="explain">
-                    Please enter your name and then click "Connect" to be
-                    interviewed by RoboYoz for the Erle-Grey Wedding Audio
+                    Enter your name and click "Connect" to chat with RoboYoz
+                    about the bride and/or groom for the Erle-Grey Wedding Audio
                     Extravaganza. You can also
                     <a href="https://calendly.com/yozlet/erle-grey-interview"
                         >schedule a live interview</a
