@@ -142,9 +142,10 @@ function addListeners() {
   // Add an event listener to the connect button to toggle the call any time the button is clicked
   connect.addEventListener("click", toggleCall);
   // Add event listeners to the number buttons to send the corresponding digit
-  Array.from(doc.querySelectorAll("button[name=digit]")).forEach((button) => {
+  Array.from(doc.querySelectorAll("button[name=digit]")).forEach((element) => {
     // Copy the digit from the button text content but strip any non DTMF characters
-    const digit = button.textContent?.replace(/[^0-9*#]/g, "");
+    const button = element as HTMLButtonElement;
+    const digit = button.value;
     button.addEventListener("click", () => digit && sendDigit(digit));
   });
   checkMicAccess();
