@@ -36,11 +36,12 @@ const save_recording: Action = async (_, params, { interview }) => {
   if (params.RecordingStatus != "completed") {
     return;
   }
+  const duration = parseInt(params.RecordingDuration || "0", 10);
   const details: Recording = {
     recordingSid: params.recordingSid || "",
     callSid: params.CallSid || "",
     uri: params.RecordingUrl || "",
-    duration: parseInt(params.RecordingDuration || "0", 10),
+    duration: duration,
     topic: interview.selectedTopic,
     question: interview.answeredQuestions.slice(-1)[0] || "",
   };
@@ -81,7 +82,7 @@ const request_topic: Action = async ({ gather, say }, params) => {
       input: ["dtmf", "speech"],
       speechModel: "phone_call",
       hints: "Schuyler, Besha",
-      speechTimeout: "2",
+      speechTimeout: "5",
     },
     "request_topic",
   );
@@ -166,25 +167,25 @@ const ask_question: Action = async (
 };
 
 const answer_question: Action = async (
-  { say, redirect },
+  { say, redirect, record },
   params,
   { interview },
 ) => {
   const digits = params.Digits || "";
-  const duration = parseInt(params.RecordingDuration || "0", 10);
+  // const duration = parseInt(params.RecordingDuration || "0", 10);
   if (digits == "0") {
     say("skip");
     redirect(request_topic);
     interview.answeredQuestions.splice(-1);
     return;
-  }
-  if (duration > 5) {
-    say("interstitial");
-  } else if (duration > 0) {
+  } else if (digits == "*") {
     say("skip");
-  }
-  if (digits == "*") {
     interview.answeredQuestions.splice(-2);
+  } else if (digits != "#") {
+    // They didn't press anything, so let's assume they're still thinking about it.
+    say("prompt_to_continue");
+    record(answer_question);
+    return;
   }
   redirect(ask_question);
 };

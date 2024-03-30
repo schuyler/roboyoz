@@ -37,7 +37,7 @@ export const createVoiceResponse = (): ActionResponse => {
   const record = (target: Action, args: RecordAttributes = {}) => {
     response.record({
       action: target.name,
-      timeout: 5,
+      timeout: 10,
       finishOnKey: "#*0",
       playBeep: false,
       recordingStatusCallback: "save_recording",

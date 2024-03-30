@@ -38,6 +38,7 @@ const messages: Record<string, string | string[]> = {
     "Do you have any advice for the soon-to-be newlyweds?",
     "Is there anything else you'd like to share with Besha and Schuyler, or their friends and family?",
   ],
+  prompt_to_continue: "Whenever you're ready to move on, press star.",
   interstitial: [
     "Great!",
     "Awesome.",
