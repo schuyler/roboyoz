@@ -15,6 +15,7 @@
         <title>Erle-Grey Wedding Interview Hotline</title>
         <style>
             button {
+                color: white;
                 width: 5em;
                 min-height: 1.5em;
                 font-size: 1em;
@@ -22,7 +23,6 @@
                 font-family: "EB Garamond", serif;
                 text-align: center;
                 margin-bottom: 0.25em;
-                color: grey;
                 background-color: black;
                 padding: 0; /* otherwise Safari iOS gets weird */
             }
@@ -50,7 +50,8 @@
                 padding: 1em;
                 position: absolute;
                 /* make the container 50% of the height but 75% of width of the window and center it on the body */
-                width: 30em;
+                --width: 30em;
+                max-width: var(--width);
                 /*height: 50%;*/
                 top: 50%;
                 left: 50%;
@@ -68,19 +69,19 @@
             @media (max-width: 768px) {
                 #container {
                     font-size: 1.25em;
-                    max-width: 75%;
+                    --width: 75%;
                 }
 
                 #explain {
                     font-size: 1em;
-                    width: 25em;
+                    max-width: 25em;
                 }
             }
 
             @media (max-width: 640px) {
                 #container {
                     font-size: 0.9em;
-                    max-width: 75%;
+                    --width: 75%;
                 }
 
                 #explain {
@@ -93,9 +94,9 @@
                 margin-bottom: 1em;
             }
 
-            #subtitle {
-                font-style: italic;
-                margin-bottom: 1em;
+            /* Make the buttons grey when disabled */
+            button[disabled="1"] {
+                color: grey;
             }
 
             #explain {
@@ -132,14 +133,64 @@
             h1 {
                 font-size: 1.5em;
             }
+
+            h2 {
+                font-size: 1em;
+                font-style: italic;
+                margin-bottom: 1em;
+            }
+
+            #overlay {
+                /* ensure that the overlay is invisible when the page loads */
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                justify-content: center;
+                align-items: center;
+                background-color: rgba(0, 0, 0);
+                border-radius: 1em;
+                padding-top: 1em;
+                z-index: 1;
+            }
+
+            #overlay-content div {
+                font-size: 0.9em;
+                margin-top: 0.5em;
+            }
+
+            #overlay-content button {
+                margin-top: 1em;
+            }
         </style>
     </head>
 
     <body>
         <div id="container">
+            <!-- add an overlay that can be toggled off and on that shows some sample questions -->
+            <div id="overlay">
+                <div id="overlay-content">
+                    <h1>Erle-Grey Wedding Interview Hotline</h1>
+                    <h2>Here are some of the questions we'll ask:</h2>
+                    <div>Please introduce yourself!</div>
+                    <div>How do you know the bride / groom?</div>
+                    <div>
+                        Tell us your favorite story about the bride or groom.
+                    </div>
+                    <div>
+                        How do the bride & groom know each other? Wrong answers
+                        only.
+                    </div>
+                    <div>What are their favorite hobbies?</div>
+                    <div>What advice do you have for the newlyweds?</div>
+                    <button id="hide-overlay">Got it!</button>
+                </div>
+            </div>
             <div id="content">
                 <h1>Erle-Grey Wedding Interview Hotline</h1>
-                <div id="subtitle">with your host, RoboYoz!</div>
+                <h2>with your host, RoboYoz!</h2>
                 <div id="identify">
                     <div>
                         <input
@@ -177,7 +228,11 @@
                 <div id="explain">
                     Enter your name and click "Connect" to chat with RoboYoz
                     about the bride and/or groom for the Erle-Grey Wedding Audio
-                    Extravaganza. You can also
+                    Extravaganza.
+                    <!-- add a link that opens the sample question overlay -->
+                    You can read some
+                    <a href="#" id="show-overlay">sample questions</a> before
+                    you start the interview. You can also
                     <a href="https://calendly.com/yozlet/erle-grey-interview"
                         >schedule a live interview</a
                     >

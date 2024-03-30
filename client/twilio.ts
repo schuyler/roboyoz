@@ -124,14 +124,21 @@ function enableConnectButton() {
 
 // Enable all buttons and set their text color to white
 function enableNumberButtons(active: boolean) {
-  // select all buttons not named "connect
+  // select all buttons not named "connect"
   const buttons = Array.from(
-    doc.querySelectorAll("button:not([name=connect])"),
+    doc.querySelectorAll("#content button:not([name=connect])"),
   ) as HTMLButtonElement[];
   buttons.forEach((button) => {
     button.style.color = active ? "white" : "grey";
     button.disabled = !active;
   });
+}
+
+// Add a function to toggle visibility of the overlay in assets/index.html
+function toggleOverlay() {
+  const overlay = $("div[id=overlay]");
+  const display = overlay.style.display;
+  overlay.style.display = !display || display == "none" ? "block" : "none";
 }
 
 // Add event listeners to the name input and connect button
@@ -148,6 +155,11 @@ function addListeners() {
     const digit = button.value;
     button.addEventListener("click", () => digit && sendDigit(digit));
   });
+  // Add click event for the show-overlay link and the hide-overlay button
+  $("#show-overlay").addEventListener("click", toggleOverlay);
+  $("#hide-overlay").addEventListener("click", toggleOverlay);
+
+  // Check microphone access when the page loads
   checkMicAccess();
 }
 
