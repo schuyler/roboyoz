@@ -14,7 +14,7 @@ type TokenConfig = {
 
 // Generate a new Twilio voice audio access token, given an identity
 export const generateToken = (name: string, env: TokenConfig): string => {
-  const identity = name.replace(/[^a-zA-Z0-9]/g, "_");
+  const identity = name.replace(/^\W+|\W+$/, "").replace(/\W/g, "_");
   const token = new AccessToken(
     env.TWILIO_ACCOUNT_SID,
     env.TWILIO_API_KEY,
