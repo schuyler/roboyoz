@@ -4,6 +4,7 @@ import {
   DynamoDBDocumentClient,
   GetCommand,
   PutCommand,
+  ScanCommand,
 } from "@aws-sdk/lib-dynamodb";
 
 export const tableName = "RoboYoz_Interviews";
@@ -84,5 +85,21 @@ export async function saveInterview(interview: Interview): Promise<void> {
   } catch (error: any) {
     // Throw exception if error occurs
     throw new Error(`Error saving interview data: ${(error as Error).message}`);
+  }
+}
+
+// Function to return a list of all caller phone numbers
+export async function listCallerPhoneNumbers(): Promise<string[]> {
+  try {
+    const params = new ScanCommand({
+      TableName: tableName,
+      ProjectionExpression: "phoneNumber",
+    });
+    const data = await docClient.send(params);
+    return data.Items?.map((item) => item.phoneNumber) ?? [];
+  } catch (error: any) {
+    throw new Error(
+      `Error listing caller phone numbers: ${(error as Error).message}`,
+    );
   }
 }
